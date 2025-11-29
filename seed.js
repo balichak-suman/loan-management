@@ -21,7 +21,8 @@ async function seedUsers() {
                 'balichaksuman@novacredit.com',
                 hashedPassword,
                 'Balichaksuman',
-                '9876543210'
+                '9876543210',
+                null // panCard
             );
 
             // Create credit card for user
@@ -45,7 +46,8 @@ async function seedUsers() {
                 'admin@novacredit.com',
                 hashedAdminPassword,
                 'Kali Admin',
-                '9999999999'
+                '9999999999',
+                null // panCard
             );
 
             // Mark as admin
