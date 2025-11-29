@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const path = require('path');
-const { initializeDatabase } = require('./database');
+const { initializeDatabase, executeSQL } = require('./database');
 const { seedUsers } = require('./seed');
 const auth = require('./auth');
 const loans = require('./loans');
@@ -15,21 +15,19 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
-app.use(cors());
+app.use(cors({ origin: '*' })); // Allow all origins for debugging
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Serve static files
-app.use(express.static(path.join(__dirname, 'public')));
+// Use process.cwd() for Vercel compatibility
+app.use(express.static(path.join(process.cwd(), 'public')));
 
 // Initialize database and seed users
-// In Vercel/Serverless, this might run on every cold start.
-// Ideally, we should check if initialized, but our initializeDatabase is idempotent (IF NOT EXISTS).
 (async () => {
     try {
         await initializeDatabase();
         // Seed users only if running locally or if needed. 
-        // For production, seeding on every start is okay if checks exist (which they do).
         await seedUsers();
     } catch (err) {
         console.error('Initialization error:', err);
@@ -39,6 +37,28 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Health check
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', message: 'Nova Credit API is running' });
+});
+
+// Debug endpoint
+app.get('/api/debug', async (req, res) => {
+    try {
+        const { get: user } = await executeSQL('SELECT count(*) as count FROM users');
+        res.json({
+            status: 'ok',
+            db_connected: true,
+            user_count: user ? user.count : 0,
+            env: {
+                has_db_url: !!process.env.TURSO_DATABASE_URL,
+                has_auth_token: !!process.env.TURSO_AUTH_TOKEN
+            }
+        });
+    } catch (error) {
+        res.status(500).json({
+            status: 'error',
+            message: error.message,
+            stack: error.stack
+        });
+    }
 });
 
 // Auth routes
@@ -82,7 +102,7 @@ app.post('/api/admin/loans/:loanId/approve', auth.authenticateToken, loans.appro
 
 // Serve index.html for all other routes (SPA)
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    res.sendFile(path.join(process.cwd(), 'public', 'index.html'));
 });
 
 // Error handling middleware
