@@ -41,14 +41,24 @@ function showAuthPage() {
 function showMainApp() {
     document.getElementById('navbar').style.display = 'block';
 
-    // Show admin link if user is admin
+    // Show/hide navigation based on user role
     if (AppState.user.isAdmin) {
+        // Admin users: show only Admin and Logs
         document.getElementById('admin-nav-link').style.display = 'flex';
         document.getElementById('logs-nav-link').style.display = 'flex';
+
+        // Hide user sections for admins
+        const userSections = ['dashboard', 'loans', 'payments', 'transactions', 'profile'];
+        userSections.forEach(section => {
+            const link = document.querySelector(`[data-page="${section}"]`);
+            if (link) link.style.display = 'none';
+        });
     }
 
     setupNavigation();
-    navigateToPage('dashboard');
+
+    // Navigate to appropriate starting page
+    navigateToPage(AppState.user.isAdmin ? 'admin' : 'dashboard');
 }
 
 // Navigation
