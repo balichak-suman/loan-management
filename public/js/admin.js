@@ -188,9 +188,23 @@ async function renderAdminPage() {
       </div>
     `;
 
+    // Add Transaction Management Section
+    pageContent.innerHTML += `
+      <div class="card" style="margin-bottom: 2rem;">
+        <div class="card-header">
+          <h3 class="card-title">📜 Transaction History Management</h3>
+          <p class="card-subtitle">View and edit all transaction records</p>
+        </div>
+        <div class="card-body" id="transactions-container">
+          Loading transactions...
+        </div>
+      </div>
+    `;
+
     // Load payment requests
     loadPaymentRequests();
     loadLoanRequests();
+    loadAllTransactions();
 
     // Render initial all loans table
     renderAllLoansTable(window.allLoans);
@@ -885,4 +899,167 @@ async function executeLoanAction(loanId, action) {
   } catch (error) {
     showToast(error.message || `Failed to ${action} loan`, 'danger');
   }
+}
+
+// Transaction Management Functions
+
+async function loadAllTransactions() {
+  const container = document.getElementById('transactions-container');
+  try {
+    const data = await apiCall('/admin/transactions?limit=100');
+    const transactions = data.transactions;
+
+    if (transactions.length === 0) {
+      container.innerHTML = '<p class="text-muted">No transactions found.</p>';
+      return;
+    }
+
+    container.innerHTML = `
+      <div class="table-container">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>User</th>
+              <th>Type</th>
+              <th>Amount</th>
+              <th>Description</th>
+              <th>Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${transactions.map(t => `
+              <tr>
+                <td>#${t.id}</td>
+                <td>${t.username || 'Unknown'}</td>
+                <td><span class="badge badge-${getTransactionTypeBadge(t.transaction_type)}">${t.transaction_type}</span></td>
+                <td style="font-weight: 600;">${formatCurrency(t.amount)}</td>
+                <td>${t.description || 'N/A'}</td>
+                <td>${new Date(t.transaction_date).toLocaleString()}</td>
+                <td>
+                  <button class="btn btn-sm btn-primary" onclick='editTransaction(${JSON.stringify(t).replace(/'/g, "&apos;")})'>
+                    ✏️ Edit
+                  </button>
+                  <button class="btn btn-sm btn-danger" onclick="deleteTransaction(${t.id})">
+                    🗑️
+                  </button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  } catch (error) {
+    container.innerHTML = `<p class="text-danger">Failed to load transactions: ${error.message}</p>`;
+  }
+}
+
+function getTransactionTypeBadge(type) {
+  const badges = {
+    'loan_application': 'primary',
+    'payment': 'success',
+    'loan_approval': 'success',
+    'penalty': 'danger',
+    'credit': 'success',
+    'debit': 'warning'
+  };
+  return badges[type] || 'secondary';
+}
+
+function editTransaction(transaction) {
+  const content = `
+    <form id="edit-transaction-form">
+      <div class="grid grid-2">
+        <div class="form-group">
+          <label class="form-label">Transaction Type</label>
+          <select id="edit-trans-type" class="form-select" required>
+            <option value="loan_application" ${transaction.transaction_type === 'loan_application' ? 'selected' : ''}>Loan Application</option>
+            <option value="payment" ${transaction.transaction_type === 'payment' ? 'selected' : ''}>Payment</option>
+            <option value="loan_approval" ${transaction.transaction_type === 'loan_approval' ? 'selected' : ''}>Loan Approval</option>
+            <option value="penalty" ${transaction.transaction_type === 'penalty' ? 'selected' : ''}>Penalty</option>
+            <option value="credit" ${transaction.transaction_type === 'credit' ? 'selected' : ''}>Credit</option>
+            <option value="debit" ${transaction.transaction_type === 'debit' ? 'selected' : ''}>Debit</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Amount (₹)</label>
+          <input type="number" id="edit-trans-amount" class="form-input" value="${transaction.amount}" min="0" step="0.01" required>
+        </div>
+        
+        <div class="form-group" style="grid-column: 1 / -1;">
+          <label class="form-label">Description</label>
+          <input type="text" id="edit-trans-description" class="form-input" value="${transaction.description || ''}" placeholder="Transaction description">
+        </div>
+        
+        <div class="form-group" style="grid-column: 1 / -1;">
+          <label class="form-label">Transaction Date</label>
+          <input type="datetime-local" id="edit-trans-date" class="form-input" value="${formatDateForInput(transaction.transaction_date)}" required>
+        </div>
+      </div>
+    </form>
+  `;
+
+  createModal('Edit Transaction #' + transaction.id, content, [
+    { text: 'Cancel', className: 'btn btn-secondary' },
+    {
+      text: 'Save Changes',
+      className: 'btn btn-primary',
+      onClick: () => saveTransactionChanges(transaction.id)
+    }
+  ]);
+}
+
+async function saveTransactionChanges(transactionId) {
+  const transactionType = document.getElementById('edit-trans-type').value;
+  const amount = parseFloat(document.getElementById('edit-trans-amount').value);
+  const description = document.getElementById('edit-trans-description').value;
+  const transactionDate = document.getElementById('edit-trans-date').value;
+
+  try {
+    await apiCall(`/admin/transactions/${transactionId}`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        transactionType,
+        amount,
+        description,
+        transactionDate: new Date(transactionDate).toISOString()
+      })
+    });
+
+    showToast('Transaction updated successfully!', 'success');
+    loadAllTransactions(); // Refresh
+  } catch (error) {
+    showToast(error.message || 'Failed to update transaction', 'danger');
+  }
+}
+
+async function deleteTransaction(transactionId) {
+  const content = `
+    <div style="text-align: center;">
+      <div style="font-size: 3rem; margin-bottom: 1rem;">🗑️</div>
+      <h3>Delete Transaction?</h3>
+      <p>Are you sure you want to delete this transaction? This action cannot be undone.</p>
+      <p class="text-muted">This will permanently remove the transaction from the history.</p>
+    </div>
+  `;
+
+  createModal('Delete Transaction', content, [
+    { text: 'Cancel', className: 'btn btn-secondary' },
+    {
+      text: 'Delete',
+      className: 'btn btn-danger',
+      onClick: async () => {
+        try {
+          await apiCall(`/admin/transactions/${transactionId}`, { method: 'DELETE' });
+          showToast('Transaction deleted successfully', 'success');
+          loadAllTransactions(); // Refresh
+        } catch (error) {
+          showToast(error.message, 'danger');
+        }
+      }
+    }
+  ]);
 }

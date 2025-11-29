@@ -1,4 +1,4 @@
-const { dbHelpers } = require('./database');
+const { dbHelpers, executeSQL } = require('./database');
 
 // Get all transactions for user
 async function getTransactions(req, res) {
@@ -59,7 +59,110 @@ async function getTransactionStats(req, res) {
     }
 }
 
+// Admin: Get all transactions
+async function getAllTransactions(req, res) {
+    try {
+        if (!req.user.isAdmin) {
+            return res.status(403).json({ error: 'Admin access required' });
+        }
+
+        const limit = parseInt(req.query.limit) || 100;
+        const { rows: transactions } = await executeSQL(
+            'SELECT t.*, u.username, u.full_name FROM transactions t LEFT JOIN users u ON t.user_id = u.id ORDER BY t.transaction_date DESC LIMIT ?',
+            [limit]
+        );
+
+        res.json({
+            success: true,
+            transactions
+        });
+    } catch (error) {
+        console.error('Get all transactions error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+}
+
+// Admin: Update transaction
+async function updateTransaction(req, res) {
+    try {
+        if (!req.user.isAdmin) {
+            return res.status(403).json({ error: 'Admin access required' });
+        }
+
+        const { transactionId } = req.params;
+        const { transactionType, amount, description, transactionDate } = req.body;
+
+        // Validate inputs
+        if (amount !== undefined && amount < 0) {
+            return res.status(400).json({ error: 'Amount must be positive' });
+        }
+
+        const updates = [];
+        const values = [];
+
+        if (transactionType) {
+            updates.push('transaction_type = ?');
+            values.push(transactionType);
+        }
+        if (amount !== undefined) {
+            updates.push('amount = ?');
+            values.push(amount);
+        }
+        if (description !== undefined) {
+            updates.push('description = ?');
+            values.push(description);
+        }
+        if (transactionDate) {
+            updates.push('transaction_date = ?');
+            values.push(transactionDate);
+        }
+
+        if (updates.length === 0) {
+            return res.status(400).json({ error: 'No fields to update' });
+        }
+
+        values.push(transactionId);
+
+        await executeSQL(
+            `UPDATE transactions SET ${updates.join(', ')} WHERE id = ?`,
+            values
+        );
+
+        res.json({
+            success: true,
+            message: 'Transaction updated successfully'
+        });
+    } catch (error) {
+        console.error('Update transaction error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+}
+
+// Admin: Delete transaction
+async function deleteTransaction(req, res) {
+    try {
+        if (!req.user.isAdmin) {
+            return res.status(403).json({ error: 'Admin access required' });
+        }
+
+        const { transactionId } = req.params;
+
+        await executeSQL('DELETE FROM transactions WHERE id = ?', [transactionId]);
+
+        res.json({
+            success: true,
+            message: 'Transaction deleted successfully'
+        });
+    } catch (error) {
+        console.error('Delete transaction error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+}
+
 module.exports = {
     getTransactions,
-    getTransactionStats
+    getTransactionStats,
+    getAllTransactions,
+    updateTransaction,
+    deleteTransaction
 };

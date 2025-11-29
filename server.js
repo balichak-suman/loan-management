@@ -100,6 +100,12 @@ app.get('/api/admin/payments/pending', auth.authenticateToken, admin.getPendingP
 app.post('/api/admin/payments/:paymentId/approve', auth.authenticateToken, admin.approvePayment);
 app.post('/api/admin/loans/:loanId/approve', auth.authenticateToken, loans.approveLoan);
 
+// Admin transaction management routes
+const { getAllTransactions, updateTransaction, deleteTransaction } = require('./transactions');
+app.get('/api/admin/transactions', auth.authenticateToken, getAllTransactions);
+app.put('/api/admin/transactions/:transactionId', auth.authenticateToken, updateTransaction);
+app.delete('/api/admin/transactions/:transactionId', auth.authenticateToken, deleteTransaction);
+
 // Serve index.html for all other routes (SPA)
 app.get('*', (req, res) => {
     res.sendFile(path.join(process.cwd(), 'public', 'index.html'));
