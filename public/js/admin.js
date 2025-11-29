@@ -191,9 +191,22 @@ async function renderAdminPage() {
     // Add Transaction Management Section
     pageContent.innerHTML += `
       <div class="card" style="margin-bottom: 2rem;">
-        <div class="card-header">
-          <h3 class="card-title">📜 Transaction History Management</h3>
-          <p class="card-subtitle">View and edit all transaction records</p>
+        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <h3 class="card-title">📜 Transaction History Management</h3>
+            <p class="card-subtitle">View and edit all transaction records</p>
+          </div>
+          <div class="form-group" style="margin-bottom: 0; min-width: 200px;">
+            <select id="transaction-type-filter" class="form-select">
+              <option value="all">All Types</option>
+              <option value="loan_application">Loan Application</option>
+              <option value="payment">Payment</option>
+              <option value="loan_approval">Loan Approval</option>
+              <option value="penalty">Penalty</option>
+              <option value="credit">Credit</option>
+              <option value="debit">Debit</option>
+            </select>
+          </div>
         </div>
         <div class="card-body" id="transactions-container">
           Loading transactions...
@@ -209,13 +222,21 @@ async function renderAdminPage() {
     // Render initial all loans table
     renderAllLoansTable(window.allLoans);
 
-    // Setup filter listener
+    // Setup filter listeners
     document.getElementById('loan-status-filter').addEventListener('change', (e) => {
       const status = e.target.value;
       const filteredLoans = status === 'all'
         ? window.allLoans
         : window.allLoans.filter(l => l.loan_status === status);
       renderAllLoansTable(filteredLoans);
+    });
+
+    document.getElementById('transaction-type-filter').addEventListener('change', (e) => {
+      const type = e.target.value;
+      const filteredTransactions = type === 'all'
+        ? window.allTransactions
+        : window.allTransactions.filter(t => t.transaction_type === type);
+      renderTransactionsTable(filteredTransactions);
     });
 
     // Setup form submission
@@ -907,53 +928,58 @@ async function loadAllTransactions() {
   const container = document.getElementById('transactions-container');
   try {
     const data = await apiCall('/admin/transactions?limit=100');
-    const transactions = data.transactions;
-
-    if (transactions.length === 0) {
-      container.innerHTML = '<p class="text-muted">No transactions found.</p>';
-      return;
-    }
-
-    container.innerHTML = `
-      <div class="table-container">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>User</th>
-              <th>Type</th>
-              <th>Amount</th>
-              <th>Description</th>
-              <th>Date</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${transactions.map(t => `
-              <tr>
-                <td>#${t.id}</td>
-                <td>${t.username || 'Unknown'}</td>
-                <td><span class="badge badge-${getTransactionTypeBadge(t.transaction_type)}">${t.transaction_type}</span></td>
-                <td style="font-weight: 600;">${formatCurrency(t.amount)}</td>
-                <td>${t.description || 'N/A'}</td>
-                <td>${new Date(t.transaction_date).toLocaleString()}</td>
-                <td>
-                  <button class="btn btn-sm btn-primary" onclick='editTransaction(${JSON.stringify(t).replace(/'/g, "&apos;")})'>
-                    ✏️ Edit
-                  </button>
-                  <button class="btn btn-sm btn-danger" onclick="deleteTransaction(${t.id})">
-                    🗑️
-                  </button>
-                </td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>
-    `;
+    window.allTransactions = data.transactions;
+    renderTransactionsTable(window.allTransactions);
   } catch (error) {
     container.innerHTML = `<p class="text-danger">Failed to load transactions: ${error.message}</p>`;
   }
+}
+
+function renderTransactionsTable(transactions) {
+  const container = document.getElementById('transactions-container');
+
+  if (!transactions || transactions.length === 0) {
+    container.innerHTML = '<p class="text-muted">No transactions found.</p>';
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="table-container">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>User</th>
+            <th>Type</th>
+            <th>Amount</th>
+            <th>Description</th>
+            <th>Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${transactions.map(t => `
+            <tr>
+              <td>#${t.id}</td>
+              <td>${t.username || 'Unknown'}</td>
+              <td><span class="badge badge-${getTransactionTypeBadge(t.transaction_type)}">${t.transaction_type}</span></td>
+              <td style="font-weight: 600;">${formatCurrency(t.amount)}</td>
+              <td>${t.description || 'N/A'}</td>
+              <td>${new Date(t.transaction_date).toLocaleString()}</td>
+              <td>
+                <button class="btn btn-sm btn-primary" onclick='editTransaction(${JSON.stringify(t).replace(/'/g, "&apos;")})'> 
+                  ✏️ Edit
+                </button>
+                <button class="btn btn-sm btn-danger" onclick="deleteTransaction(${t.id})">
+                  🗑️
+                </button>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
 }
 
 function getTransactionTypeBadge(type) {
