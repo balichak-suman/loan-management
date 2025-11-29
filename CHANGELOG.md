@@ -11,9 +11,11 @@ All notable changes to Nova Credit will be documented in this file.
   - Read-only access with filtering by action type, admin user, and date range
   - Automatic cleanup scheduler runs daily at midnight
 - **Data Export**: Complete database backup functionality
-  - Export all users, loans, payments, transactions, and system parameters
-  - JSON format with metadata and statistics
+  - Excel format with multiple sheets (Summary, Users, Loans, Payments, Transactions, System Parameters)
+  - Professional tabular format easy to view and analyze
   - One-click download from admin panel
+  - Separate Excel export for admin logs with filter support
+  - Removed JSON export (Excel-only for simplicity)
 - **Transaction Management**: Admin capabilities to manage transaction history
   - View all transactions across all users
   - Edit transaction type, amount, description, and date

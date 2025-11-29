@@ -34,14 +34,9 @@ async function renderAdminPage() {
             <h2>🔧 Admin Panel</h2>
             <p class="text-muted">Manage system parameters and user accounts</p>
           </div>
-          <div style="display: flex; gap: 0.5rem;">
-            <button id="export-excel-btn" class="btn btn-success">
-              📊 Export to Excel
-            </button>
-            <button id="export-json-btn" class="btn btn-secondary">
-              📄 Export JSON
-            </button>
-          </div>
+          <button id="export-excel-btn" class="btn btn-success">
+            📊 Export All Data (Excel)
+          </button>
         </div>
         
         <!-- System Parameters -->
@@ -252,9 +247,8 @@ async function renderAdminPage() {
     // Setup form submission
     document.getElementById('admin-parameters-form').addEventListener('submit', handleParametersUpdate);
 
-    // Setup export buttons
-    document.getElementById('export-excel-btn').addEventListener('click', () => exportAllData('excel'));
-    document.getElementById('export-json-btn').addEventListener('click', () => exportAllData('json'));
+    // Setup export button
+    document.getElementById('export-excel-btn').addEventListener('click', exportAllDataExcel);
   } catch (error) {
     pageContent.innerHTML = `
       <div class="alert alert-danger">
@@ -1105,131 +1099,115 @@ async function deleteTransaction(transactionId) {
 }
 
 // Export all data
-async function exportAllData(format = 'excel') {
+// Export all data to Excel
+async function exportAllDataExcel() {
   try {
-    showToast(`Preparing ${format.toUpperCase()} export...`, 'info');
+    showToast('Preparing Excel export...', 'info');
 
     const data = await apiCall('/admin/export');
     const exportData = data.export;
     const date = new Date().toISOString().split('T')[0];
 
-    if (format === 'json') {
-      // JSON Export
-      const jsonStr = JSON.stringify(exportData, null, 2);
-      const blob = new Blob([jsonStr], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
+    // Excel Export using SheetJS
+    const workbook = XLSX.utils.book_new();
 
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `nova-credit-backup-${date}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+    // Summary Sheet
+    const summaryData = [
+      ['Nova Credit - Data Export'],
+      ['Export Date', exportData.export_date],
+      ['Exported By', exportData.export_by],
+      [],
+      ['Statistics'],
+      ['Total Users', exportData.statistics.total_users],
+      ['Total Loans', exportData.statistics.total_loans],
+      ['Total Payments', exportData.statistics.total_payments],
+      ['Total Transactions', exportData.statistics.total_transactions]
+    ];
+    const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
+    XLSX.utils.book_append_sheet(workbook, summarySheet, 'Summary');
 
-      showToast(`✅ JSON exported successfully!`, 'success');
-    } else if (format === 'excel') {
-      // Excel Export using SheetJS
-      const workbook = XLSX.utils.book_new();
-
-      // Summary Sheet
-      const summaryData = [
-        ['Nova Credit - Data Export'],
-        ['Export Date', exportData.export_date],
-        ['Exported By', exportData.export_by],
-        [],
-        ['Statistics'],
-        ['Total Users', exportData.statistics.total_users],
-        ['Total Loans', exportData.statistics.total_loans],
-        ['Total Payments', exportData.statistics.total_payments],
-        ['Total Transactions', exportData.statistics.total_transactions]
-      ];
-      const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
-      XLSX.utils.book_append_sheet(workbook, summarySheet, 'Summary');
-
-      // Users Sheet
-      if (exportData.data.users && exportData.data.users.length > 0) {
-        const usersSheet = XLSX.utils.json_to_sheet(exportData.data.users.map(u => ({
-          'ID': u.id,
-          'Username': u.username,
-          'Full Name': u.full_name,
-          'Email': u.email,
-          'Phone': u.phone,
-          'PAN Card': u.pan_card,
-          'Credit Score': u.credit_score,
-          'Credit Limit': u.credit_limit,
-          'Is Admin': u.is_admin ? 'Yes' : 'No',
-          'Created At': new Date(u.created_at).toLocaleString()
-        })));
-        XLSX.utils.book_append_sheet(workbook, usersSheet, 'Users');
-      }
-
-      // Loans Sheet
-      if (exportData.data.loans && exportData.data.loans.length > 0) {
-        const loansSheet = XLSX.utils.json_to_sheet(exportData.data.loans.map(l => ({
-          'Loan ID': l.id,
-          'User ID': l.user_id,
-          'Amount': l.loan_amount,
-          'Interest Rate': l.interest_rate,
-          'Duration (months)': l.loan_duration,
-          'Monthly Payment': l.monthly_payment,
-          'Total Payable': l.total_payable,
-          'Status': l.loan_status,
-          'Comments': l.comments,
-          'Bank Name': l.bank_name,
-          'Account Number': l.account_number,
-          'IFSC Code': l.ifsc_code,
-          'Application Date': new Date(l.application_date).toLocaleString(),
-          'Approval Date': l.approval_date ? new Date(l.approval_date).toLocaleString() : 'N/A'
-        })));
-        XLSX.utils.book_append_sheet(workbook, loansSheet, 'Loans');
-      }
-
-      // Payments Sheet
-      if (exportData.data.payments && exportData.data.payments.length > 0) {
-        const paymentsSheet = XLSX.utils.json_to_sheet(exportData.data.payments.map(p => ({
-          'Payment ID': p.id,
-          'User ID': p.user_id,
-          'Loan ID': p.loan_id,
-          'Amount': p.payment_amount,
-          'Status': p.payment_status,
-          'Proof Image': p.proof_image || 'N/A',
-          'Payment Date': new Date(p.payment_date).toLocaleString(),
-          'Approval Date': p.approval_date ? new Date(p.approval_date).toLocaleString() : 'N/A'
-        })));
-        XLSX.utils.book_append_sheet(workbook, paymentsSheet, 'Payments');
-      }
-
-      // Transactions Sheet
-      if (exportData.data.transactions && exportData.data.transactions.length > 0) {
-        const transactionsSheet = XLSX.utils.json_to_sheet(exportData.data.transactions.map(t => ({
-          'Transaction ID': t.id,
-          'User ID': t.user_id,
-          'Type': t.transaction_type,
-          'Amount': t.amount,
-          'Description': t.description || 'N/A',
-          'Date': new Date(t.transaction_date).toLocaleString()
-        })));
-        XLSX.utils.book_append_sheet(workbook, transactionsSheet, 'Transactions');
-      }
-
-      // System Parameters Sheet
-      if (exportData.data.system_parameters && exportData.data.system_parameters.length > 0) {
-        const paramsSheet = XLSX.utils.json_to_sheet(exportData.data.system_parameters.map(p => ({
-          'Interest Rate (%)': p.interest_rate,
-          'Penalty Rate (per 10k)': p.penalty_rate_per_10k,
-          'Max Loan Amount': p.max_loan_amount,
-          'Min Loan Amount': p.min_loan_amount,
-          'Last Updated': new Date(p.updated_at).toLocaleString()
-        })));
-        XLSX.utils.book_append_sheet(workbook, paramsSheet, 'System Parameters');
-      }
-
-      // Generate Excel file
-      XLSX.writeFile(workbook, `nova-credit-backup-${date}.xlsx`);
-
-      showToast(`✅ Excel exported successfully! (${exportData.statistics.total_users} users, ${exportData.statistics.total_loans} loans, ${exportData.statistics.total_payments} payments)`, 'success');
+    // Users Sheet
+    if (exportData.data.users && exportData.data.users.length > 0) {
+      const usersSheet = XLSX.utils.json_to_sheet(exportData.data.users.map(u => ({
+        'ID': u.id,
+        'Username': u.username,
+        'Full Name': u.full_name,
+        'Email': u.email,
+        'Phone': u.phone,
+        'PAN Card': u.pan_card,
+        'Credit Score': u.credit_score,
+        'Credit Limit': u.credit_limit,
+        'Is Admin': u.is_admin ? 'Yes' : 'No',
+        'Created At': new Date(u.created_at).toLocaleString()
+      })));
+      XLSX.utils.book_append_sheet(workbook, usersSheet, 'Users');
     }
+
+    // Loans Sheet
+    if (exportData.data.loans && exportData.data.loans.length > 0) {
+      const loansSheet = XLSX.utils.json_to_sheet(exportData.data.loans.map(l => ({
+        'Loan ID': l.id,
+        'User ID': l.user_id,
+        'Amount': l.loan_amount,
+        'Interest Rate': l.interest_rate,
+        'Duration (months)': l.loan_duration,
+        'Monthly Payment': l.monthly_payment,
+        'Total Payable': l.total_payable,
+        'Status': l.loan_status,
+        'Comments': l.comments,
+        'Bank Name': l.bank_name,
+        'Account Number': l.account_number,
+        'IFSC Code': l.ifsc_code,
+        'Application Date': new Date(l.application_date).toLocaleString(),
+        'Approval Date': l.approval_date ? new Date(l.approval_date).toLocaleString() : 'N/A'
+      })));
+      XLSX.utils.book_append_sheet(workbook, loansSheet, 'Loans');
+    }
+
+    // Payments Sheet
+    if (exportData.data.payments && exportData.data.payments.length > 0) {
+      const paymentsSheet = XLSX.utils.json_to_sheet(exportData.data.payments.map(p => ({
+        'Payment ID': p.id,
+        'User ID': p.user_id,
+        'Loan ID': p.loan_id,
+        'Amount': p.payment_amount,
+        'Status': p.payment_status,
+        'Proof Image': p.proof_image || 'N/A',
+        'Payment Date': new Date(p.payment_date).toLocaleString(),
+        'Approval Date': p.approval_date ? new Date(p.approval_date).toLocaleString() : 'N/A'
+      })));
+      XLSX.utils.book_append_sheet(workbook, paymentsSheet, 'Payments');
+    }
+
+    // Transactions Sheet
+    if (exportData.data.transactions && exportData.data.transactions.length > 0) {
+      const transactionsSheet = XLSX.utils.json_to_sheet(exportData.data.transactions.map(t => ({
+        'Transaction ID': t.id,
+        'User ID': t.user_id,
+        'Type': t.transaction_type,
+        'Amount': t.amount,
+        'Description': t.description || 'N/A',
+        'Date': new Date(t.transaction_date).toLocaleString()
+      })));
+      XLSX.utils.book_append_sheet(workbook, transactionsSheet, 'Transactions');
+    }
+
+    // System Parameters Sheet
+    if (exportData.data.system_parameters && exportData.data.system_parameters.length > 0) {
+      const paramsSheet = XLSX.utils.json_to_sheet(exportData.data.system_parameters.map(p => ({
+        'Interest Rate (%)': p.interest_rate,
+        'Penalty Rate (per 10k)': p.penalty_rate_per_10k,
+        'Max Loan Amount': p.max_loan_amount,
+        'Min Loan Amount': p.min_loan_amount,
+        'Last Updated': new Date(p.updated_at).toLocaleString()
+      })));
+      XLSX.utils.book_append_sheet(workbook, paramsSheet, 'System Parameters');
+    }
+
+    // Generate Excel file
+    XLSX.writeFile(workbook, `nova-credit-backup-${date}.xlsx`);
+
+    showToast(`✅ Excel exported successfully! (${exportData.statistics.total_users} users, ${exportData.statistics.total_loans} loans, ${exportData.statistics.total_payments} payments)`, 'success');
   } catch (error) {
     showToast('Failed to export data: ' + error.message, 'danger');
   }

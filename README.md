@@ -174,9 +174,10 @@ The application is fully responsive with:
 
 ### Data Export
 - **Complete Backup**: Export all users, loans, payments, transactions, and system parameters
-- **JSON Format**: Structured data export with metadata
+- **Excel Format**: Professional multi-sheet workbook with proper formatting
 - **One-Click Download**: Automatic file download from admin panel
-- **Statistics Included**: Export includes counts and summary information
+- **Statistics Included**: Summary sheet with counts and export metadata
+- **Logs Export**: Separate Excel export for admin activity logs with filters
 - **Regular Backups Recommended**: Weekly exports for disaster recovery
 
 ### Transaction Management

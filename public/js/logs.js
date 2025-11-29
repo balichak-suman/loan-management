@@ -1,29 +1,34 @@
 // Logs Page
 async function renderLogsPage() {
-    const pageContent = document.getElementById('page-content');
+  const pageContent = document.getElementById('page-content');
 
-    // Check if user is admin
-    if (!AppState.user.isAdmin) {
-        pageContent.innerHTML = `
+  // Check if user is admin
+  if (!AppState.user.isAdmin) {
+    pageContent.innerHTML = `
       <div class="alert alert-danger">
         <strong>Access Denied</strong><br>
         You do not have permission to access the logs.
       </div>
     `;
-        return;
-    }
+    return;
+  }
 
-    showLoading(pageContent);
+  showLoading(pageContent);
 
-    try {
-        // Fetch admin usernames for filter
-        const adminsData = await apiCall('/admin/logs/admins');
+  try {
+    // Fetch admin usernames for filter
+    const adminsData = await apiCall('/admin/logs/admins');
 
-        pageContent.innerHTML = `
+    pageContent.innerHTML = `
       <div class="fade-in">
-        <div style="margin-bottom: 2rem;">
-          <h2>📋 Admin Activity Logs</h2>
-          <p class="text-muted">Tamper-proof audit trail of all administrative actions</p>
+        <div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+          <div>
+            <h2>📋 Admin Activity Logs</h2>
+            <p class="text-muted">Tamper-proof audit trail of all administrative actions</p>
+          </div>
+          <button id="export-logs-excel-btn" class="btn btn-success">
+            📊 Export Logs (Excel)
+          </button>
         </div>
 
         <!-- Filters -->
@@ -89,53 +94,54 @@ async function renderLogsPage() {
       </div>
     `;
 
-        // Load initial logs
-        loadLogs();
+    // Load initial logs
+    loadLogs();
 
-        // Setup filter listeners
-        document.getElementById('apply-log-filters').addEventListener('click', loadLogs);
-        document.getElementById('reset-log-filters').addEventListener('click', () => {
-            document.getElementById('log-action-filter').value = 'all';
-            document.getElementById('log-admin-filter').value = 'all';
-            document.getElementById('log-start-date').value = '';
-            document.getElementById('log-end-date').value = '';
-            loadLogs();
-        });
+    // Setup filter listeners
+    document.getElementById('apply-log-filters').addEventListener('click', loadLogs);
+    document.getElementById('reset-log-filters').addEventListener('click', () => {
+      document.getElementById('log-action-filter').value = 'all';
+      document.getElementById('log-admin-filter').value = 'all';
+      document.getElementById('log-start-date').value = '';
+      document.getElementById('log-end-date').value = '';
+      loadLogs();
+    });
+    document.getElementById('export-logs-excel-btn').addEventListener('click', exportLogsExcel);
 
-    } catch (error) {
-        pageContent.innerHTML = `
+  } catch (error) {
+    pageContent.innerHTML = `
       <div class="alert alert-danger">
         Failed to load logs page: ${error.message}
       </div>
     `;
-    }
+  }
 }
 
 async function loadLogs() {
-    const container = document.getElementById('logs-container');
-    container.innerHTML = '<p class="text-muted">Loading...</p>';
+  const container = document.getElementById('logs-container');
+  container.innerHTML = '<p class="text-muted">Loading...</p>';
 
-    try {
-        const actionType = document.getElementById('log-action-filter').value;
-        const adminUsername = document.getElementById('log-admin-filter').value;
-        const startDate = document.getElementById('log-start-date').value;
-        const endDate = document.getElementById('log-end-date').value;
+  try {
+    const actionType = document.getElementById('log-action-filter').value;
+    const adminUsername = document.getElementById('log-admin-filter').value;
+    const startDate = document.getElementById('log-start-date').value;
+    const endDate = document.getElementById('log-end-date').value;
 
-        let url = '/admin/logs?limit=200';
-        if (actionType !== 'all') url += `&actionType=${actionType}`;
-        if (adminUsername !== 'all') url += `&adminUsername=${adminUsername}`;
-        if (startDate) url += `&startDate=${startDate}`;
-        if (endDate) url += `&endDate=${endDate}`;
+    let url = '/admin/logs?limit=200';
+    if (actionType !== 'all') url += `&actionType=${actionType}`;
+    if (adminUsername !== 'all') url += `&adminUsername=${adminUsername}`;
+    if (startDate) url += `&startDate=${startDate}`;
+    if (endDate) url += `&endDate=${endDate}`;
 
-        const data = await apiCall(url);
-        const logs = data.logs;
+    const data = await apiCall(url);
+    const logs = data.logs;
 
-        if (logs.length === 0) {
-            container.innerHTML = '<p class="text-muted">No logs found matching the selected criteria.</p>';
-            return;
-        }
+    if (logs.length === 0) {
+      container.innerHTML = '<p class="text-muted">No logs found matching the selected criteria.</p>';
+      return;
+    }
 
-        container.innerHTML = `
+    container.innerHTML = `
       <div class="table-container">
         <table class="table">
           <thead>
@@ -172,34 +178,34 @@ async function loadLogs() {
         🔒 Showing ${logs.length} log entries. Logs are immutable and cannot be edited or deleted.
       </p>
     `;
-    } catch (error) {
-        container.innerHTML = `<p class="text-danger">Failed to load logs: ${error.message}</p>`;
-    }
+  } catch (error) {
+    container.innerHTML = `<p class="text-danger">Failed to load logs: ${error.message}</p>`;
+  }
 }
 
 function getActionTypeBadge(actionType) {
-    const badges = {
-        'UPDATE_USER': 'primary',
-        'UPDATE_LOAN': 'primary',
-        'DELETE_LOAN': 'danger',
-        'CREATE_LOAN': 'success',
-        'APPROVE_LOAN': 'success',
-        'REJECT_LOAN': 'danger',
-        'APPROVE_PAYMENT': 'success',
-        'REJECT_PAYMENT': 'danger',
-        'UPDATE_SYSTEM_PARAMS': 'warning',
-        'UPDATE_TRANSACTION': 'primary',
-        'DELETE_TRANSACTION': 'danger'
-    };
-    return badges[actionType] || 'secondary';
+  const badges = {
+    'UPDATE_USER': 'primary',
+    'UPDATE_LOAN': 'primary',
+    'DELETE_LOAN': 'danger',
+    'CREATE_LOAN': 'success',
+    'APPROVE_LOAN': 'success',
+    'REJECT_LOAN': 'danger',
+    'APPROVE_PAYMENT': 'success',
+    'REJECT_PAYMENT': 'danger',
+    'UPDATE_SYSTEM_PARAMS': 'warning',
+    'UPDATE_TRANSACTION': 'primary',
+    'DELETE_TRANSACTION': 'danger'
+  };
+  return badges[actionType] || 'secondary';
 }
 
 function formatActionType(actionType) {
-    return actionType.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+  return actionType.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
 }
 
 function showLogDetails(log) {
-    const content = `
+  const content = `
     <div style="display: flex; flex-direction: column; gap: 1.5rem;">
       <div>
         <h4 style="margin-bottom: 0.5rem;">Log Information</h4>
@@ -228,7 +234,66 @@ function showLogDetails(log) {
     </div>
   `;
 
-    createModal('Log Details', content, [
-        { text: 'Close', className: 'btn btn-secondary' }
-    ]);
+  createModal('Log Details', content, [
+    { text: 'Close', className: 'btn btn-secondary' }
+  ]);
+}
+
+// Export logs to Excel
+async function exportLogsExcel() {
+  try {
+    showToast('Preparing logs export...', 'info');
+    
+    // Get current filter values
+    const actionType = document.getElementById('log-action-filter').value;
+    const adminUsername = document.getElementById('log-admin-filter').value;
+    const startDate = document.getElementById('log-start-date').value;
+    const endDate = document.getElementById('log-end-date').value;
+    
+    let url = '/admin/logs?limit=1000'; // Export more logs
+    if (actionType !== 'all') url += `&actionType=${actionType}`;
+    if (adminUsername !== 'all') url += `&adminUsername=${adminUsername}`;
+    if (startDate) url += `&startDate=${startDate}`;
+    if (endDate) url += `&endDate=${endDate}`;
+    
+    const data = await apiCall(url);
+    const logs = data.logs;
+    
+    if (logs.length === 0) {
+      showToast('No logs to export', 'warning');
+      return;
+    }
+    
+    // Create Excel workbook
+    const workbook = XLSX.utils.book_new();
+    
+    // Logs Sheet
+    const logsSheet = XLSX.utils.json_to_sheet(logs.map(log => ({
+      'ID': log.id,
+      'Timestamp': new Date(log.timestamp).toLocaleString(),
+      'Admin Username': log.admin_username,
+      'Action Type': formatActionType(log.action_type),
+      'Target Entity': log.target_entity || 'N/A',
+      'Target ID': log.target_id || 'N/A',
+      'Old Values': log.old_values ? JSON.stringify(log.old_values) : 'N/A',
+      'New Values': log.new_values ? JSON.stringify(log.new_values) : 'N/A',
+      'IP Address': log.ip_address || 'N/A'
+    })));
+    
+    XLSX.utils.book_append_sheet(workbook, logsSheet, 'Admin Logs');
+    
+    // Generate filename with filters
+    const date = new Date().toISOString().split('T')[0];
+    let filename = `admin-logs-${date}`;
+    if (actionType !== 'all') filename += `-${actionType}`;
+    if (adminUsername !== 'all') filename += `-${adminUsername}`;
+    filename += '.xlsx';
+    
+    // Download file
+    XLSX.writeFile(workbook, filename);
+    
+    showToast(`✅ Exported ${logs.length} log entries to Excel!`, 'success');
+  } catch (error) {
+    showToast('Failed to export logs: ' + error.message, 'danger');
+  }
 }
