@@ -2,6 +2,42 @@
 
 All notable changes to Nova Credit will be documented in this file.
 
+## [2.1.0] - 2025-11-30
+
+### Added
+- **Admin Audit Logging**: Tamper-proof activity logs tracking all admin actions
+  - 31-day automatic retention policy
+  - Logs capture admin username, action type, before/after values, IP address, timestamp
+  - Read-only access with filtering by action type, admin user, and date range
+  - Automatic cleanup scheduler runs daily at midnight
+- **Data Export**: Complete database backup functionality
+  - Export all users, loans, payments, transactions, and system parameters
+  - JSON format with metadata and statistics
+  - One-click download from admin panel
+- **Transaction Management**: Admin capabilities to manage transaction history
+  - View all transactions across all users
+  - Edit transaction type, amount, description, and date
+  - Delete transactions with confirmation
+  - Filter transactions by type
+- **Admin-Only Interface**: Dedicated admin experience
+  - Admins see only Admin and Logs sections
+  - User sections (Dashboard, Loans, Payments, etc.) hidden for admins
+  - Admins land directly on Admin panel
+- **Filtering Enhancements**: Added filters throughout admin panel
+  - Loan status filter (pending, approved, active, paid, rejected)
+  - Transaction type filter
+  - Log action type and admin user filters
+
+### Changed
+- **Admin Navigation**: Simplified for system management focus
+- **Database Schema**: Added `admin_logs` table with foreign key constraints
+- **Server Initialization**: Integrated log cleanup scheduler
+
+### Security
+- **Tamper-Proof Logs**: No API endpoints for editing or deleting logs
+- **INSERT-Only Design**: Logs can only be created, never modified
+- **Admin-Only Access**: All admin features require authentication and admin role verification
+
 ## [2.0.0] - 2025-11-30
 
 ### Added

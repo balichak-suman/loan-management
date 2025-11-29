@@ -13,11 +13,15 @@ A modern, cloud-native credit card and loan management system with real-time pay
 - **Responsive Design**: Fully optimized for mobile and desktop devices
 
 ### Admin Features
-- **User Management**: View and manage all user accounts
-- **Loan Approval**: Review and approve/reject loan applications
-- **Payment Verification**: Approve pending payments with proof verification
+- **Dedicated Admin Interface**: Admins see only Admin and Logs sections (no user features)
+- **User Management**: View and manage all user accounts, edit profiles, manage credit limits
+- **Loan Management**: Review, approve/reject, edit, create, and delete loans
+- **Payment Verification**: Approve/reject pending payments with proof verification
+- **Transaction Management**: View, edit, delete, and filter all transaction records
 - **System Parameters**: Configure interest rates, loan limits, and penalty rates
-- **Comprehensive Dashboard**: Monitor all system activities
+- **Audit Logging**: Tamper-proof activity logs with 31-day retention
+- **Data Export**: Export complete database backup (users, loans, payments, transactions)
+- **Filtering**: Filter loans by status, transactions by type, logs by action/admin/date
 
 ## 🛠️ Technology Stack
 
@@ -156,8 +160,32 @@ The application is fully responsive with:
 - **payments**: Payment records and history
 - **transactions**: Financial transaction log
 - **system_parameters**: Configurable system settings
+- **admin_logs**: Tamper-proof audit trail of admin actions (31-day retention)
 
-## 🔧 Configuration
+## � Admin Features
+
+### Audit Logging
+- **Tamper-Proof**: Logs can only be created, never edited or deleted
+- **31-Day Retention**: Automatic cleanup of logs older than 31 days
+- **Comprehensive Tracking**: Logs all admin actions (user updates, loan changes, etc.)
+- **Detailed Information**: Captures admin username, action type, before/after values, IP address, timestamp
+- **Filtering**: Filter logs by action type, admin user, and date range
+- **Read-Only Access**: Admin-only viewing, no modification capabilities
+
+### Data Export
+- **Complete Backup**: Export all users, loans, payments, transactions, and system parameters
+- **JSON Format**: Structured data export with metadata
+- **One-Click Download**: Automatic file download from admin panel
+- **Statistics Included**: Export includes counts and summary information
+- **Regular Backups Recommended**: Weekly exports for disaster recovery
+
+### Transaction Management
+- **View All**: See complete transaction history across all users
+- **Edit Transactions**: Modify transaction type, amount, description, and date
+- **Delete Transactions**: Remove transactions with confirmation
+- **Filter by Type**: Filter by loan application, payment, penalty, etc.
+
+## �🔧 Configuration
 
 ### System Parameters (Admin Only)
 - **Interest Rate**: Default loan interest rate
@@ -182,6 +210,7 @@ nova-credit/
 │   │   ├── transactions.js# Transaction history
 │   │   ├── profile.js     # User profile
 │   │   ├── admin.js       # Admin panel
+│   │   ├── logs.js        # Admin logs viewer
 │   │   └── utils.js       # Utility functions
 │   └── index.html         # Main HTML file
 ├── api/
@@ -194,6 +223,8 @@ nova-credit/
 ├── transactions.js        # Transaction routes
 ├── profile.js             # Profile routes
 ├── admin.js               # Admin routes
+├── logs.js                # Admin logs API
+├── admin-logger.js        # Admin action logger utility
 ├── seed.js                # Database seeding
 ├── vercel.json            # Vercel configuration
 ├── package.json           # Dependencies
@@ -228,9 +259,19 @@ nova-credit/
 
 ### Admin
 - `GET /api/admin/users` - Get all users
+- `PUT /api/admin/users/:userId` - Update user profile
 - `GET /api/admin/loans` - Get all loans
+- `PUT /api/admin/loans/:loanId` - Update loan
+- `DELETE /api/admin/loans/:loanId` - Delete loan
+- `POST /api/admin/users/:userId/loans` - Create loan for user
 - `GET /api/admin/payments/pending` - Pending payments
 - `POST /api/admin/payments/:id/approve` - Approve payment
+- `GET /api/admin/transactions` - Get all transactions
+- `PUT /api/admin/transactions/:transactionId` - Update transaction
+- `DELETE /api/admin/transactions/:transactionId` - Delete transaction
+- `GET /api/admin/logs` - Get admin activity logs (read-only)
+- `GET /api/admin/logs/admins` - Get admin usernames for filter
+- `GET /api/admin/export` - Export all data (backup)
 
 ## 🧪 Testing
 
