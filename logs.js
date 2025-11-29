@@ -79,7 +79,72 @@ async function getAdminUsernames(req, res) {
     }
 }
 
+// Cleanup old logs (31-day retention)
+async function cleanupOldLogs() {
+    try {
+        const thirtyOneDaysAgo = new Date();
+        thirtyOneDaysAgo.setDate(thirtyOneDaysAgo.getDate() - 31);
+
+        const result = await executeSQL(
+            'DELETE FROM admin_logs WHERE timestamp < ?',
+            [thirtyOneDaysAgo.toISOString()]
+        );
+
+        console.log(`🗑️ Cleaned up old logs. Deleted ${result.changes || 0} entries older than 31 days.`);
+        return result.changes || 0;
+    } catch (error) {
+        console.error('Cleanup old logs error:', error);
+        return 0;
+    }
+}
+
+// Export all data (admin only)
+async function exportAllData(req, res) {
+    try {
+        if (!req.user.isAdmin) {
+            return res.status(403).json({ error: 'Admin access required' });
+        }
+
+        // Fetch all data
+        const [users, loans, payments, transactions, systemParams] = await Promise.all([
+            executeSQL('SELECT * FROM users'),
+            executeSQL('SELECT * FROM loans'),
+            executeSQL('SELECT * FROM payments'),
+            executeSQL('SELECT * FROM transactions'),
+            executeSQL('SELECT * FROM system_parameters')
+        ]);
+
+        const exportData = {
+            export_date: new Date().toISOString(),
+            export_by: req.user.username,
+            data: {
+                users: users.rows,
+                loans: loans.rows,
+                payments: payments.rows,
+                transactions: transactions.rows,
+                system_parameters: systemParams.rows
+            },
+            statistics: {
+                total_users: users.rows.length,
+                total_loans: loans.rows.length,
+                total_payments: payments.rows.length,
+                total_transactions: transactions.rows.length
+            }
+        };
+
+        res.json({
+            success: true,
+            export: exportData
+        });
+    } catch (error) {
+        console.error('Export data error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+}
+
 module.exports = {
     getAdminLogs,
-    getAdminUsernames
+    getAdminUsernames,
+    cleanupOldLogs,
+    exportAllData
 };

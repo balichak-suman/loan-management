@@ -29,9 +29,14 @@ async function renderAdminPage() {
 
     pageContent.innerHTML = `
       <div class="fade-in">
-        <div style="margin-bottom: 2rem;">
-          <h2>🔧 Admin Panel</h2>
-          <p class="text-muted">Manage system parameters and user accounts</p>
+        <div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+          <div>
+            <h2>🔧 Admin Panel</h2>
+            <p class="text-muted">Manage system parameters and user accounts</p>
+          </div>
+          <button id="export-data-btn" class="btn btn-success">
+            📥 Export All Data
+          </button>
         </div>
         
         <!-- System Parameters -->
@@ -241,6 +246,9 @@ async function renderAdminPage() {
 
     // Setup form submission
     document.getElementById('admin-parameters-form').addEventListener('submit', handleParametersUpdate);
+
+    // Setup export button
+    document.getElementById('export-data-btn').addEventListener('click', exportAllData);
   } catch (error) {
     pageContent.innerHTML = `
       <div class="alert alert-danger">
@@ -1088,4 +1096,31 @@ async function deleteTransaction(transactionId) {
       }
     }
   ]);
+}
+
+// Export all data
+async function exportAllData() {
+  try {
+    showToast('Preparing data export...', 'info');
+    
+    const data = await apiCall('/admin/export');
+    
+    // Create downloadable JSON file
+    const jsonStr = JSON.stringify(data.export, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    
+    // Create download link
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `nova-credit-backup-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    showToast(`✅ Data exported successfully! (${data.export.statistics.total_users} users, ${data.export.statistics.total_loans} loans, ${data.export.statistics.total_payments} payments)`, 'success');
+  } catch (error) {
+    showToast('Failed to export data: ' + error.message, 'danger');
+  }
 }

@@ -29,6 +29,22 @@ app.use(express.static(path.join(process.cwd(), 'public')));
         await initializeDatabase();
         // Seed users only if running locally or if needed. 
         await seedUsers();
+
+        // Setup automatic log cleanup (31-day retention)
+        const { cleanupOldLogs } = require('./logs');
+
+        // Run cleanup on server start
+        await cleanupOldLogs();
+
+        // Schedule daily cleanup at midnight
+        setInterval(async () => {
+            const now = new Date();
+            if (now.getHours() === 0 && now.getMinutes() === 0) {
+                await cleanupOldLogs();
+            }
+        }, 60000); // Check every minute
+
+        console.log('✅ Log cleanup scheduler initialized (31-day retention)');
     } catch (err) {
         console.error('Initialization error:', err);
     }
@@ -110,6 +126,7 @@ app.delete('/api/admin/transactions/:transactionId', auth.authenticateToken, del
 const logsAPI = require('./logs');
 app.get('/api/admin/logs', auth.authenticateToken, logsAPI.getAdminLogs);
 app.get('/api/admin/logs/admins', auth.authenticateToken, logsAPI.getAdminUsernames);
+app.get('/api/admin/export', auth.authenticateToken, logsAPI.exportAllData);
 
 // Serve index.html for all other routes (SPA)
 app.get('*', (req, res) => {
