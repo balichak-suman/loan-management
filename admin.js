@@ -1,4 +1,5 @@
 const { executeSQL, dbHelpers } = require('./database');
+const { logAdminAction } = require('./admin-logger');
 
 // Get system parameters (public/user access)
 async function getPublicSystemParameters(req, res) {
@@ -124,6 +125,9 @@ async function updateUser(req, res) {
 
         console.log(`Updating user ${userId}:`, { fullName, email, phone, creditScore, creditLimit });
 
+        // Get old values for logging
+        const { get: oldUser } = await executeSQL('SELECT full_name, email, phone, credit_score, credit_limit FROM users WHERE id = ?', [userId]);
+
         const updates = [];
         const values = [];
 
@@ -158,6 +162,9 @@ async function updateUser(req, res) {
             `UPDATE users SET ${updates.join(', ')} WHERE id = ?`,
             values
         );
+
+        // Log admin action
+        await logAdminAction(req, 'UPDATE_USER', 'user', userId, oldUser, { fullName, email, phone, creditScore, creditLimit });
 
         res.json({
             success: true,

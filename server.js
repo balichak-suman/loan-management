@@ -106,6 +106,11 @@ app.get('/api/admin/transactions', auth.authenticateToken, getAllTransactions);
 app.put('/api/admin/transactions/:transactionId', auth.authenticateToken, updateTransaction);
 app.delete('/api/admin/transactions/:transactionId', auth.authenticateToken, deleteTransaction);
 
+// Admin logs routes (read-only)
+const logsAPI = require('./logs');
+app.get('/api/admin/logs', auth.authenticateToken, logsAPI.getAdminLogs);
+app.get('/api/admin/logs/admins', auth.authenticateToken, logsAPI.getAdminUsernames);
+
 // Serve index.html for all other routes (SPA)
 app.get('*', (req, res) => {
     res.sendFile(path.join(process.cwd(), 'public', 'index.html'));

@@ -44,6 +44,7 @@ function showMainApp() {
     // Show admin link if user is admin
     if (AppState.user.isAdmin) {
         document.getElementById('admin-nav-link').style.display = 'flex';
+        document.getElementById('logs-nav-link').style.display = 'flex';
     }
 
     setupNavigation();
@@ -129,6 +130,9 @@ function navigateToPage(page) {
             break;
         case 'admin':
             renderAdminPage();
+            break;
+        case 'logs':
+            renderLogsPage();
             break;
     }
 }

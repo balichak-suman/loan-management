@@ -142,6 +142,19 @@ async function initializeDatabase() {
       max_loan_amount REAL DEFAULT 1000000,
       min_loan_amount REAL DEFAULT 1000,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+    `CREATE TABLE IF NOT EXISTS admin_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      admin_id INTEGER NOT NULL,
+      admin_username TEXT NOT NULL,
+      action_type TEXT NOT NULL,
+      target_entity TEXT,
+      target_id INTEGER,
+      old_values TEXT,
+      new_values TEXT,
+      ip_address TEXT,
+      timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (admin_id) REFERENCES users(id)
     )`
   ];
 
@@ -289,6 +302,24 @@ const dbHelpers = {
     const result = await executeSQL(
       'INSERT INTO credit_cards (user_id, card_number, card_holder, expiry_date, cvv, card_type) VALUES (?, ?, ?, ?, ?, ?)',
       [userId, cardNumber, cardHolder, expiryDate, cvv, cardType]
+    );
+    return result.lastID;
+  },
+
+  // Create admin log (INSERT ONLY - tamper-proof)
+  createAdminLog: async (adminId, adminUsername, actionType, targetEntity, targetId, oldValues, newValues, ipAddress) => {
+    const result = await executeSQL(
+      'INSERT INTO admin_logs (admin_id, admin_username, action_type, target_entity, target_id, old_values, new_values, ip_address) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [
+        adminId,
+        adminUsername,
+        actionType,
+        targetEntity || null,
+        targetId || null,
+        oldValues ? JSON.stringify(oldValues) : null,
+        newValues ? JSON.stringify(newValues) : null,
+        ipAddress || null
+      ]
     );
     return result.lastID;
   }
