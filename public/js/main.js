@@ -51,18 +51,48 @@ function showMainApp() {
 }
 
 // Navigation
+// Navigation
 function setupNavigation() {
     const navLinks = document.querySelectorAll('.nav-link');
+    const hamburger = document.getElementById('hamburger');
+    const navMenu = document.getElementById('nav-menu');
+
+    // Hamburger Toggle
+    if (hamburger) {
+        hamburger.addEventListener('click', () => {
+            hamburger.classList.toggle('active');
+            navMenu.classList.toggle('active');
+        });
+    }
+
     navLinks.forEach(link => {
         link.addEventListener('click', (e) => {
             e.preventDefault();
+
+            // Close mobile menu
+            if (hamburger && navMenu) {
+                hamburger.classList.remove('active');
+                navMenu.classList.remove('active');
+            }
+
+            // Handle Logout Link
+            if (link.id === 'mobile-logout-btn') {
+                logout();
+                return;
+            }
+
             const page = link.dataset.page;
-            navigateToPage(page);
+            if (page) {
+                navigateToPage(page);
+            }
         });
     });
 
-    // Logout button
-    document.getElementById('logout-btn').addEventListener('click', logout);
+    // Logout button (Desktop)
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', logout);
+    }
 }
 
 function navigateToPage(page) {

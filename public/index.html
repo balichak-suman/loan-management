@@ -39,7 +39,13 @@
             <span class="brand-tagline">Payment Management</span>
           </div>
 
-          <div class="navbar-menu">
+          <button class="hamburger" id="hamburger" aria-label="Toggle menu">
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+
+          <div class="navbar-menu" id="nav-menu">
             <a href="#dashboard" class="nav-link active" data-page="dashboard">
               <span class="nav-icon">📊</span>
               Dashboard
@@ -64,9 +70,13 @@
               <span class="nav-icon">🔧</span>
               Admin
             </a>
+            <a href="#" class="nav-link mobile-only" id="mobile-logout-btn">
+              <span class="nav-icon">🚪</span>
+              Logout
+            </a>
           </div>
 
-          <button id="logout-btn" class="btn btn-secondary">Logout</button>
+          <button id="logout-btn" class="btn btn-secondary desktop-only">Logout</button>
         </div>
       </nav>
 
@@ -78,15 +88,15 @@
   </div>
 
   <!-- Scripts -->
-  <script src="/js/utils.js?v=2"></script>
-  <script src="/js/main.js?v=3"></script>
-  <script src="/js/auth.js?v=2"></script>
-  <script src="/js/dashboard.js?v=2"></script>
-  <script src="/js/loans.js?v=2"></script>
-  <script src="/js/payments.js?v=2"></script>
-  <script src="/js/transactions.js?v=2"></script>
-  <script src="/js/profile.js?v=2"></script>
-  <script src="/js/admin.js?v=2"></script>
+  <script src="/js/utils.js?v=4"></script>
+  <script src="/js/main.js?v=4"></script>
+  <script src="/js/auth.js?v=4"></script>
+  <script src="/js/dashboard.js?v=4"></script>
+  <script src="/js/loans.js?v=4"></script>
+  <script src="/js/payments.js?v=4"></script>
+  <script src="/js/transactions.js?v=4"></script>
+  <script src="/js/profile.js?v=4"></script>
+  <script src="/js/admin.js?v=4"></script>
 </body>
 
 </html>
