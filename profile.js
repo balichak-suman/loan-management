@@ -31,7 +31,7 @@ async function getProfile(req, res) {
                 fullName: user.full_name,
                 phone: user.phone,
                 creditScore: user.credit_score,
-                creditLimit: user.credit_limit || 10000,
+                creditLimit: parseFloat(user.credit_limit || 10000),
                 createdAt: user.created_at,
                 creditCards: creditCards.map(card => ({
                     ...card,

@@ -41,19 +41,23 @@ function showAuthPage() {
 function showMainApp() {
     document.getElementById('navbar').style.display = 'block';
 
-    // Show/hide navigation based on user role
-    if (AppState.user.isAdmin) {
-        // Admin users: show only Admin and Logs
-        document.getElementById('admin-nav-link').style.display = 'flex';
-        document.getElementById('logs-nav-link').style.display = 'flex';
+    const isAdmin = AppState.user && AppState.user.isAdmin;
 
-        // Hide user sections for admins
-        const userSections = ['dashboard', 'loans', 'payments', 'transactions', 'profile'];
-        userSections.forEach(section => {
-            const link = document.querySelector(`[data-page="${section}"]`);
-            if (link) link.style.display = 'none';
-        });
-    }
+    // Admin and Logs links
+    const adminLink = document.getElementById('admin-nav-link');
+    const logsLink = document.getElementById('logs-nav-link');
+
+    if (adminLink) adminLink.style.display = isAdmin ? 'flex' : 'none';
+    if (logsLink) logsLink.style.display = isAdmin ? 'flex' : 'none';
+
+    // User sections
+    const userSections = ['dashboard', 'loans', 'payments', 'transactions', 'profile'];
+    userSections.forEach(section => {
+        const link = document.querySelector(`[data-page="${section}"]`);
+        if (link) {
+            link.style.display = isAdmin ? 'none' : 'flex';
+        }
+    });
 
     setupNavigation();
 
@@ -173,6 +177,18 @@ async function apiCall(endpoint, options = {}) {
         const data = await response.json();
 
         if (!response.ok) {
+            // Handle auth errors (401/403) by redirecting to login
+            if (response.status === 401 || response.status === 403) {
+                console.warn('Authentication failed, redirecting to login...');
+
+                // Only logout if we are not already on the login page (to avoid loops if login fails)
+                // And if we actually have a token (otherwise we are already "logged out")
+                if (AppState.token) {
+                    logout();
+                    showToast('Session expired. Please login again.', 'error');
+                    return; // Stop further processing
+                }
+            }
             throw new Error(data.error || 'API request failed');
         }
 

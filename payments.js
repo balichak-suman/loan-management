@@ -94,7 +94,7 @@ async function getPendingPayments(req, res) {
         res.json({
             success: true,
             pendingPayments: pendingLoans,
-            totalPending: pendingLoans.reduce((sum, loan) => sum + loan.totalDue, 0)
+            totalPending: pendingLoans.reduce((sum, loan) => sum + parseFloat(loan.totalDue || 0), 0)
         });
     } catch (error) {
         console.error('Pending payments error:', error);

@@ -1,5 +1,7 @@
 const { executeSQL, dbHelpers } = require('./database');
 const { logAdminAction } = require('./admin-logger');
+const { calculateLoanDetails } = require('./loans');
+const { sendLoanConfirmation } = require('./email');
 
 // Get system parameters (public/user access)
 async function getPublicSystemParameters(req, res) {
@@ -72,10 +74,16 @@ async function updateSystemParameters(req, res) {
             return res.status(400).json({ error: 'Min loan amount must be positive' });
         }
 
-        // Update parameters
+        // Update parameters using PostgreSQL ON CONFLICT syntax
         await executeSQL(
-            `INSERT OR REPLACE INTO system_parameters (id, interest_rate, penalty_rate_per_10k, max_loan_amount, min_loan_amount, updated_at)
-       VALUES (1, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+            `INSERT INTO system_parameters (id, interest_rate, penalty_rate_per_10k, max_loan_amount, min_loan_amount, updated_at)
+             VALUES (1, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+             ON CONFLICT (id) DO UPDATE SET
+             interest_rate = EXCLUDED.interest_rate,
+             penalty_rate_per_10k = EXCLUDED.penalty_rate_per_10k,
+             max_loan_amount = EXCLUDED.max_loan_amount,
+             min_loan_amount = EXCLUDED.min_loan_amount,
+             updated_at = EXCLUDED.updated_at`,
             [
                 interestRate || 6.0,
                 penaltyRate || 1300,
@@ -249,10 +257,13 @@ async function updateLoan(req, res) {
 
             const activeLoans = userLoans.filter(l => l.outstanding_balance > 0 && l.id !== parseInt(loanId) && l.loan_status !== 'rejected');
             let currentDebt = 0;
-            activeLoans.forEach(l => currentDebt += l.outstanding_balance);
+            activeLoans.forEach(l => {
+                const details = calculateLoanDetails(l);
+                currentDebt += details.outstandingBalance;
+            });
 
-            const creditLimit = user.credit_limit || 10000;
-            const newLoanAmount = loanAmount !== undefined ? loanAmount : currentLoan.loan_amount;
+            const creditLimit = parseFloat(user.credit_limit || 10000);
+            const newLoanAmount = loanAmount !== undefined ? parseFloat(loanAmount) : parseFloat(currentLoan.loan_amount);
 
             if (currentDebt + newLoanAmount > creditLimit) {
                 return res.status(400).json({
@@ -401,7 +412,10 @@ async function createLoanForUser(req, res) {
 
         const activeLoans = userLoans.filter(l => l.outstanding_balance > 0 && l.loan_status !== 'rejected');
         let currentDebt = 0;
-        activeLoans.forEach(l => currentDebt += l.outstanding_balance);
+        activeLoans.forEach(l => {
+            const details = calculateLoanDetails(l);
+            currentDebt += details.outstandingBalance;
+        });
 
         const creditLimit = user.credit_limit || 10000;
 
@@ -419,10 +433,26 @@ async function createLoanForUser(req, res) {
         const interestRateDecimal = interestRatePercent / 100;
 
         // Fixed 28-day term (1 period)
-        const totalWithInterest = loanAmount * (1 + interestRateDecimal);
+        const totalWithInterest = parseFloat(loanAmount) * (1 + interestRateDecimal);
         const monthlyPayment = totalWithInterest; // No EMI, full amount due
 
         const loanId = await dbHelpers.createLoan(userId, loanAmount, loanPurpose, monthlyPayment, interestRatePercent, comments);
+
+        // Fetch loan for full details (like due date) to send in email
+        const newLoan = await dbHelpers.getLoanById(loanId);
+
+        // Send confirmation email
+        try {
+            await sendLoanConfirmation(user.email, {
+                amount: loanAmount,
+                purpose: loanPurpose,
+                dueDate: new Date(newLoan.due_date).toLocaleDateString(),
+                comments: comments
+            });
+        } catch (mailError) {
+            console.error('Failed to send loan confirmation email:', mailError);
+            // Don't fail the request if email fails
+        }
 
         res.status(201).json({
             success: true,

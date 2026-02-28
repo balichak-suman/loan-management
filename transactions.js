@@ -40,12 +40,13 @@ async function getTransactionStats(req, res) {
         };
 
         transactions.forEach(t => {
+            const amount = parseFloat(t.amount || 0);
             if (t.transaction_type === 'loan_application') {
                 stats.totalLoans++;
-                stats.totalLoanAmount += t.amount;
+                stats.totalLoanAmount += amount;
             } else if (t.transaction_type === 'payment') {
                 stats.totalPayments++;
-                stats.totalPaymentAmount += t.amount;
+                stats.totalPaymentAmount += amount;
             }
         });
 

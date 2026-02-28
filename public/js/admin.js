@@ -637,11 +637,24 @@ function showCreateLoanModal(userId) {
       </div>
       <div class="form-group">
         <label class="form-label">Purpose</label>
-        <input type="text" id="create-loan-purpose" class="form-input" placeholder="e.g. Personal" required>
+        <select id="create-loan-purpose" class="form-select" required>
+          <option value="">Select purpose</option>
+          <option value="Personal">Personal</option>
+          <option value="Education">Education</option>
+          <option value="Medical">Medical</option>
+          <option value="Business">Business</option>
+          <option value="Home Improvement">Home Improvement</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Comments (Optional)</label>
+        <textarea id="create-loan-comments" class="form-textarea" placeholder="Add any notes or comments here..."></textarea>
       </div>
       <div class="form-group">
         <label class="form-label">Tenure (Months)</label>
-        <input type="number" id="create-loan-tenure" class="form-input" value="12" required>
+        <input type="number" id="create-loan-tenure" class="form-input" value="1" disabled>
+        <small class="text-muted">Fixed 28-day term</small>
       </div>
       <button type="submit" class="btn btn-primary" style="width: 100%;">Create Loan</button>
     </form>
@@ -653,12 +666,12 @@ function showCreateLoanModal(userId) {
     e.preventDefault();
     const loanAmount = document.getElementById('create-loan-amount').value;
     const loanPurpose = document.getElementById('create-loan-purpose').value;
-    const tenure = document.getElementById('create-loan-tenure').value;
+    const comments = document.getElementById('create-loan-comments').value;
 
     try {
       await apiCall(`/admin/users/${userId}/loans`, {
         method: 'POST',
-        body: JSON.stringify({ loanAmount, loanPurpose, tenure })
+        body: JSON.stringify({ loanAmount, loanPurpose, comments })
       });
       showToast('Loan created successfully', 'success');
       closeModal(overlay);

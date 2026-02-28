@@ -9,8 +9,7 @@ const loans = require('./loans');
 const payments = require('./payments');
 const { getTransactions, getTransactionStats } = require('./transactions');
 const profile = require('./profile');
-const admin = require('./admin'); // Import as object
-
+const admin = require('./admin');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -26,8 +25,9 @@ app.use(express.static(path.join(process.cwd(), 'public')));
 // Initialize database and seed users
 (async () => {
     try {
+        console.log('🗄️ Initializing database...');
         await initializeDatabase();
-        // Seed users only if running locally or if needed. 
+        console.log('🌱 Seeding users...');
         await seedUsers();
 
         // Setup automatic log cleanup (31-day retention)
@@ -45,6 +45,11 @@ app.use(express.static(path.join(process.cwd(), 'public')));
         }, 60000); // Check every minute
 
         console.log('✅ Log cleanup scheduler initialized (31-day retention)');
+
+        // Initialize loan notification scheduler
+        const { startScheduler } = require('./scheduler');
+        startScheduler();
+        console.log('✅ Loan notification scheduler initialized');
     } catch (err) {
         console.error('Initialization error:', err);
     }
@@ -78,8 +83,14 @@ app.get('/api/debug', async (req, res) => {
 });
 
 // Auth routes
+app.post('/api/auth/request-otp', auth.requestRegistrationOTP);
+app.post('/api/auth/verify-otp', auth.verifyRegistrationOTP);
 app.post('/api/auth/register', auth.register);
 app.post('/api/auth/login', auth.login);
+app.post('/api/auth/login/verify-otp', auth.verifyLoginOTP);
+app.post('/api/auth/forgot-password/request-otp', auth.requestPasswordResetOTP);
+app.post('/api/auth/forgot-password/verify-otp', auth.verifyPasswordResetOTP);
+app.post('/api/auth/forgot-password/reset', auth.resetPassword);
 app.get('/api/parameters', admin.getPublicSystemParameters); // Public route for calculator
 
 // Loan routes (protected)

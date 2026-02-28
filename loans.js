@@ -8,7 +8,10 @@ function calculateLoanDetails(loan) {
     // Interest is already included in outstanding_balance upon approval
     // We only calculate penalties for overdue payments
 
-    let currentBalance = loan.outstanding_balance;
+    const outstanding_balance = parseFloat(loan.outstanding_balance || 0);
+    const loan_amount = parseFloat(loan.loan_amount || 0);
+
+    let currentBalance = outstanding_balance;
     let daysOverdue = 0;
     let penaltyAmount = 0;
     let interestAmount = 0;
@@ -17,39 +20,39 @@ function calculateLoanDetails(loan) {
     // it likely means interest wasn't added to the DB record.
     // We should add it for display/calculation purposes.
     // We assume 1 month simple interest for consistency with the user's view.
-    if (Math.abs(currentBalance - loan.loan_amount) < 1 && (loan.loan_status === 'approved' || loan.loan_status === 'active')) {
+    if (Math.abs(currentBalance - loan_amount) < 1 && (loan.loan_status === 'approved' || loan.loan_status === 'active')) {
         const rate = loan.interest_rate || 6.8;
         // Rate is percentage (e.g. 6.8)
         let rateDecimal = parseFloat(rate);
         if (rateDecimal > 1) rateDecimal = rateDecimal / 100;
 
-        interestAmount = loan.loan_amount * rateDecimal;
+        interestAmount = loan_amount * rateDecimal;
         currentBalance += interestAmount;
     }
 
-    if (now > dueDate && loan.outstanding_balance > 0) {
-        daysOverdue = Math.floor((now - dueDate) / (1000 * 60 * 60 * 24));
-        // Ensure non-negative
+    if (now > dueDate && outstanding_balance > 0) {
+        const getISTDate = (date) => {
+            const istString = date.toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
+            const d = new Date(istString);
+            d.setHours(0, 0, 0, 0);
+            return d;
+        };
+
+        const nowMidnight = getISTDate(now);
+        const dueMidnight = getISTDate(dueDate);
+
+        const diffTime = nowMidnight - dueMidnight;
+        daysOverdue = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         if (daysOverdue < 0) daysOverdue = 0;
 
-        // Penalty: ₹1,300 per ₹10,000 per day
-        const penaltyRate = 1300 / 10000; // 0.13 per rupee per day
-        // Penalty should be based on the Principal amount usually, or the Outstanding? 
-        // User prompt implies: Penalty 7800. 
-        // If Principal 20000. 20000 * 0.13 * 3 = 7800. 
-        // So Penalty is based on PRINCIPAL (loan_amount), not outstanding balance.
-        // My previous code used loan.outstanding_balance.
-        // If outstanding_balance was 20000, it worked.
-        // If outstanding_balance includes interest (21200), penalty would be higher.
-        // Let's fix penalty to be based on loan_amount to match user's 7800 expectation.
-
-        penaltyAmount = loan.loan_amount * penaltyRate * daysOverdue;
+        const penaltyRate = 1300 / 10000;
+        penaltyAmount = loan_amount * penaltyRate * daysOverdue;
     }
 
     const totalDue = currentBalance + penaltyAmount;
 
     return {
-        outstandingBalance: totalDue, // P + I + Penalty
+        outstandingBalance: totalDue,
         interestAccrued: interestAmount,
         daysOverdue,
         penaltyAmount,
@@ -88,15 +91,13 @@ async function applyForLoan(req, res) {
 
         // Calculate total outstanding debt
         // We use calculateLoanDetails to get the accurate outstanding balance including interest/penalties
+        // Calculate total outstanding debt dynamically to include accrued penalties
         const activeLoans = userLoans.filter(l => l.outstanding_balance > 0 && l.loan_status !== 'rejected');
         let totalDebt = 0;
 
-        // We need to calculate details for each loan to get current total due
-        // But calculateLoanDetails is synchronous and we have the data
         activeLoans.forEach(loan => {
-            // Use the stored outstanding_balance which is updated on approval/payment
-            // Or should we recalculate? Stored balance is safer for "current state"
-            totalDebt += loan.outstanding_balance;
+            const details = calculateLoanDetails(loan);
+            totalDebt += details.outstandingBalance;
         });
 
         const creditLimit = user.credit_limit || 10000;
@@ -238,7 +239,10 @@ async function approveLoan(req, res) {
 
         const activeLoans = userLoans.filter(l => l.outstanding_balance > 0 && l.id !== parseInt(loanId) && l.loan_status !== 'rejected');
         let currentDebt = 0;
-        activeLoans.forEach(l => currentDebt += l.outstanding_balance);
+        activeLoans.forEach(l => {
+            const details = calculateLoanDetails(l);
+            currentDebt += details.outstandingBalance;
+        });
 
         const creditLimit = user.credit_limit || 10000;
         const newLoanAmount = loan.loan_amount;
