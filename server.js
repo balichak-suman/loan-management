@@ -56,7 +56,7 @@ app.use(express.static(path.join(process.cwd(), 'public')));
 })();
 
 // Health check
-app.get('/api/health', (req, res) => {
+app.get('/health', (req, res) => {
     console.log(`❤️ Health check ping received at ${new Date().toISOString()}`);
     res.json({ status: 'ok', message: 'Nova Credit API is running' });
 });
