@@ -201,7 +201,7 @@ async function renderAdminPage() {
             <h3 class="card-title">📜 Transaction History Management</h3>
             <p class="card-subtitle">View and edit all transaction records</p>
           </div>
-          <div class="form-group" style="margin-bottom: 0; min-width: 200px;">
+          <div class="form-group" style="margin-bottom: 0; min-width: 200px; display: flex; gap: 10px;">
             <select id="transaction-type-filter" class="form-select">
               <option value="all">All Types</option>
               <option value="loan_application">Loan Application</option>
@@ -211,6 +211,7 @@ async function renderAdminPage() {
               <option value="credit">Credit</option>
               <option value="debit">Debit</option>
             </select>
+            <button class="btn btn-success" onclick="showCreateTransactionModal()" style="white-space: nowrap;">➕ Add Transaction</button>
           </div>
         </div>
         <div class="card-body" id="transactions-container">

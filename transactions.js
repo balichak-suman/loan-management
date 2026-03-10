@@ -160,10 +160,65 @@ async function deleteTransaction(req, res) {
     }
 }
 
+// Admin: Create transaction
+async function createAdminTransaction(req, res) {
+    try {
+        if (!req.user.isAdmin) {
+            return res.status(403).json({ error: 'Admin access required' });
+        }
+
+        let { userId, transactionType, amount, description } = req.body;
+
+        // Validate inputs
+        if (!userId) {
+            return res.status(400).json({ error: 'User ID is required' });
+        }
+        if (!transactionType) {
+            return res.status(400).json({ error: 'Transaction type is required' });
+        }
+        if (amount === undefined || amount === null) {
+            return res.status(400).json({ error: 'Amount is required' });
+        }
+        amount = parseFloat(amount);
+        if (isNaN(amount) || amount < 0) {
+            return res.status(400).json({ error: 'Amount must be a non-negative number' });
+        }
+
+        // Verify user exists
+        const { get: user } = await executeSQL('SELECT id FROM users WHERE id = ?', [userId]);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Create transaction
+        // Using dbHelpers.createTransaction (userId, transactionType, amount, description, balanceAfter)
+        // Note: For balanceAfter, manual admin transactions might not dictate a strict account balance change
+        // compared to loans/payments. We'll set it to 0 or null for simplicity, or we'd need to calculate it.
+        // The DB schema allows nulls. We will leave balance_after as null for purely manual adjustments.
+
+        await dbHelpers.createTransaction(
+            userId,
+            transactionType,
+            amount,
+            description || `Admin manual ${transactionType}`,
+            null
+        );
+
+        res.status(201).json({
+            success: true,
+            message: 'Transaction created successfully'
+        });
+    } catch (error) {
+        console.error('Create admin transaction error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+}
+
 module.exports = {
     getTransactions,
     getTransactionStats,
     getAllTransactions,
     updateTransaction,
-    deleteTransaction
+    deleteTransaction,
+    createAdminTransaction
 };

@@ -128,8 +128,9 @@ app.post('/api/admin/payments/:paymentId/approve', auth.authenticateToken, admin
 app.post('/api/admin/loans/:loanId/approve', auth.authenticateToken, loans.approveLoan);
 
 // Admin transaction management routes
-const { getAllTransactions, updateTransaction, deleteTransaction } = require('./transactions');
+const { getAllTransactions, updateTransaction, deleteTransaction, createAdminTransaction } = require('./transactions');
 app.get('/api/admin/transactions', auth.authenticateToken, getAllTransactions);
+app.post('/api/admin/transactions', auth.authenticateToken, createAdminTransaction);
 app.put('/api/admin/transactions/:transactionId', auth.authenticateToken, updateTransaction);
 app.delete('/api/admin/transactions/:transactionId', auth.authenticateToken, deleteTransaction);
 
