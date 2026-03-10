@@ -133,44 +133,12 @@ async function login(req, res) {
             return res.status(401).json({ error: 'Invalid username or password' });
         }
 
-        // Instead of issuing token, send OTP for login verification
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        otpStore.set(user.email, { otp, timestamp: Date.now(), userId: user.id, username: user.username, isAdmin: user.is_admin === 1 });
-
-        console.log('Login OTP for', user.email, ':', otp);
-        await sendOTP(user.email, otp);
-
-        res.json({
-            success: true,
-            otpRequired: true,
-            email: user.email,
-            message: 'OTP sent to your email for login'
-        });
-    } catch (error) {
-        console.error('Login error:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-}
-
-// Step 2: Verify Login OTP
-async function verifyLoginOTP(req, res) {
-    try {
-        const { email, otp } = req.body;
-        if (!email || !otp) return res.status(400).json({ error: 'Email and OTP are required' });
-
-        const stored = otpStore.get(email);
-        if (!stored || stored.otp !== otp || (Date.now() - stored.timestamp) > 600000) {
-            return res.status(400).json({ error: 'Invalid or expired OTP' });
-        }
-
-        // Generate JWT token
-        const token = jwt.sign({ userId: stored.userId, username: stored.username, isAdmin: stored.isAdmin }, JWT_SECRET, { expiresIn: JWT_EXPIRY });
-
-        // Get full user data for frontend
-        const user = await dbHelpers.getUserById(stored.userId);
-
-        // Clear OTP
-        otpStore.delete(email);
+        // Generate JWT token directly instead of sending OTP
+        const token = jwt.sign(
+            { userId: user.id, username: user.username, isAdmin: user.is_admin === 1 },
+            JWT_SECRET,
+            { expiresIn: JWT_EXPIRY }
+        );
 
         res.json({
             success: true,
@@ -187,10 +155,11 @@ async function verifyLoginOTP(req, res) {
             }
         });
     } catch (error) {
-        console.error('Login OTP verify error:', error);
-        res.status(500).json({ error: 'Failed to verify login OTP' });
+        console.error('Login error:', error);
+        res.status(500).json({ error: 'Internal server error' });
     }
 }
+
 
 // Forgot Password Step 1: Request Reset OTP
 async function requestPasswordResetOTP(req, res) {
@@ -303,7 +272,6 @@ function generateCVV() {
 module.exports = {
     register,
     login,
-    verifyLoginOTP,
     authenticateToken,
     requestRegistrationOTP,
     verifyRegistrationOTP,

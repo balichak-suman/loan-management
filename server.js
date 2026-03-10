@@ -88,7 +88,6 @@ app.post('/api/auth/request-otp', auth.requestRegistrationOTP);
 app.post('/api/auth/verify-otp', auth.verifyRegistrationOTP);
 app.post('/api/auth/register', auth.register);
 app.post('/api/auth/login', auth.login);
-app.post('/api/auth/login/verify-otp', auth.verifyLoginOTP);
 app.post('/api/auth/forgot-password/request-otp', auth.requestPasswordResetOTP);
 app.post('/api/auth/forgot-password/verify-otp', auth.verifyPasswordResetOTP);
 app.post('/api/auth/forgot-password/reset', auth.resetPassword);

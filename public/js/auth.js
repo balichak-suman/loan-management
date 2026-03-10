@@ -222,13 +222,7 @@ async function handleLogin(e) {
       body: JSON.stringify({ username, password })
     });
 
-    if (data.otpRequired) {
-      showToast('OTP sent to your email', 'success');
-      showLoginOTPForm(data.email);
-      return;
-    }
-
-    // Store token and user
+    // Store token and user directly
     localStorage.setItem('nova_credit_token', data.token);
     localStorage.setItem('nova_credit_user', JSON.stringify(data.user));
     AppState.token = data.token;
@@ -241,48 +235,7 @@ async function handleLogin(e) {
   }
 }
 
-function showLoginOTPForm(email) {
-  const container = document.getElementById('auth-form-container');
-  container.innerHTML = `
-    <form id="login-otp-form" style="text-align: left;">
-      <p style="color: white; margin-bottom: 1rem;">OTP sent to ${email}</p>
-      <div class="form-group">
-        <label class="form-label" style="color: white;">Enter 6-digit OTP</label>
-        <input type="text" id="login-otp" class="form-input" placeholder="123456" required>
-      </div>
-      
-      <button type="submit" class="btn btn-secondary" style="width: 100%; background: white; color: #667eea; font-weight: 700;">
-        Verify & Login
-      </button>
-      <button type="button" class="btn btn-link" style="width: 100%; color: white; margin-top: 1rem;" onclick="showLoginForm()">Back</button>
-    </form>
-  `;
 
-  document.getElementById('login-otp-form').addEventListener('submit', (e) => handleLoginOTP(e, email));
-}
-
-async function handleLoginOTP(e, email) {
-  e.preventDefault();
-  const otp = document.getElementById('login-otp').value;
-
-  try {
-    const data = await apiCall('/auth/login/verify-otp', {
-      method: 'POST',
-      body: JSON.stringify({ email, otp })
-    });
-
-    // Store token and user
-    localStorage.setItem('nova_credit_token', data.token);
-    localStorage.setItem('nova_credit_user', JSON.stringify(data.user));
-    AppState.token = data.token;
-    AppState.user = data.user;
-
-    showToast('Login successful!', 'success');
-    showMainApp();
-  } catch (error) {
-    showToast(error.message || 'Invalid OTP', 'danger');
-  }
-}
 
 let forgotPasswordData = {};
 
