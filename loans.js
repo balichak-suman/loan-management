@@ -244,8 +244,8 @@ async function approveLoan(req, res) {
             currentDebt += details.outstandingBalance;
         });
 
-        const creditLimit = user.credit_limit || 10000;
-        const newLoanAmount = loan.loan_amount;
+        const creditLimit = parseFloat(user.credit_limit || 10000);
+        const newLoanAmount = parseFloat(loan.loan_amount);
 
         // Check if approving this loan exceeds the limit
         // We compare (currentDebt + newLoanAmount) vs Credit Limit
@@ -260,11 +260,11 @@ async function approveLoan(req, res) {
         // Fixed 28-day term (1 period)
 
         // Use the interest rate stored on the loan (which came from system params at creation)
-        const interestRatePercent = loan.interest_rate || 6.8;
+        const interestRatePercent = parseFloat(loan.interest_rate || 6.8);
         const interestRateDecimal = interestRatePercent / 100;
 
         // Simple interest for 1 period
-        const totalWithInterest = loan.loan_amount * (1 + interestRateDecimal);
+        const totalWithInterest = newLoanAmount * (1 + interestRateDecimal);
 
         // Update loan status AND outstanding balance to include full interest
         await dbHelpers.updateLoan(loanId, {
