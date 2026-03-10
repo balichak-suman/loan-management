@@ -279,10 +279,10 @@ async function updateLoan(req, res) {
         let finalApprovalDate = approvalDate;
         let finalMonthlyPayment = monthlyPayment;
 
-        const isApproved = (loanStatus === 'approved') || (currentLoan.loan_status === 'approved' && loanStatus !== 'pending' && loanStatus !== 'rejected');
+        const newlyApproved = (loanStatus === 'approved' && currentLoan.loan_status !== 'approved');
 
-        if (isApproved) {
-            // Recalculate interest and base outstanding balance
+        if (newlyApproved) {
+            // Recalculate interest and base outstanding balance ONLY on fresh approval
             const rate = interestRate !== undefined ? interestRate : (currentLoan.interest_rate || 6.8);
             const amount = loanAmount !== undefined ? loanAmount : currentLoan.loan_amount;
 
@@ -294,7 +294,7 @@ async function updateLoan(req, res) {
             const interestAmount = amount * rateDecimal;
             const baseTotalWithInterest = parseFloat(amount) + interestAmount;
 
-            console.log(`Recalculating Approved Loan #${loanId}: Principal ${amount}, Rate ${rateDecimal}, Base Total ${baseTotalWithInterest}`);
+            console.log(`Newly Approved Loan #${loanId}: Principal ${amount}, Rate ${rateDecimal}, Base Total ${baseTotalWithInterest}`);
 
             // Update outstanding balance to be the Base Total (Principal + Interest).
             finalOutstandingBalance = baseTotalWithInterest;
@@ -302,8 +302,8 @@ async function updateLoan(req, res) {
             // ALSO update monthly_payment to match the new total (assuming 1 month term)
             finalMonthlyPayment = baseTotalWithInterest;
 
-            // Set approval date if not provided and it was just approved
-            if (!finalApprovalDate && currentLoan.loan_status !== 'approved') {
+            // Set approval date if not provided
+            if (!finalApprovalDate) {
                 finalApprovalDate = new Date().toISOString();
             }
         }
