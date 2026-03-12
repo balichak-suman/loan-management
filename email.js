@@ -8,18 +8,32 @@ apiKey.apiKey = process.env.BREVO_API_KEY;
 const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
 
 async function sendEmail({ to, subject, htmlContent }) {
+    if (!process.env.BREVO_API_KEY) {
+        console.error('❌ Error: BREVO_API_KEY is missing in environment variables.');
+        throw new Error('Email service not configured. Please check BREVO_API_KEY.');
+    }
+
     try {
         const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
         sendSmtpEmail.subject = subject;
         sendSmtpEmail.htmlContent = htmlContent;
-        sendSmtpEmail.sender = { name: "Nova Credit", email: process.env.BREVO_SENDER_EMAIL || "noreply@novacredit.com" };
+        sendSmtpEmail.sender = {
+            name: "Nova Credit",
+            email: process.env.BREVO_SENDER_EMAIL || "noreply@novacredit.com"
+        };
         sendSmtpEmail.to = [{ email: to }];
 
         const data = await apiInstance.sendTransacEmail(sendSmtpEmail);
         console.log('✉️ Email sent successfully:', data.messageId);
         return data;
     } catch (error) {
-        console.error('❌ Error sending email:', error);
+        if (error.status === 401) {
+            console.error('❌ Brevo API Error: Invalid API Key.');
+        } else if (error.status === 400) {
+            console.error('❌ Brevo API Error: Invalid sender or recipient details.');
+        } else {
+            console.error('❌ Error sending email:', error.message || error);
+        }
         throw error;
     }
 }

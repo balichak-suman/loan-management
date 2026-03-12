@@ -4,7 +4,7 @@ This guide will help you deploy your application to the cloud for **free** and k
 
 ## Prerequisites
 - [GitHub Account](https://github.com)
-- [Vercel Account](https://vercel.com) (Log in with GitHub)
+- [Render Account](https://render.com) (Log in with GitHub)
 - [Turso Account](https://turso.tech) (Log in with GitHub)
 
 ---
@@ -45,42 +45,61 @@ Turso provides a free, persistent SQLite database in the cloud.
     ```bash
     turso db show nova-credit-db --url
     ```
-    *Copy this URL (starts with `libsql://`). You'll need it for Vercel.*
+    *Copy this URL (starts with `libsql://`). You'll need it for Render.*
 5.  **Create an Auth Token**:
     ```bash
     turso db tokens create nova-credit-db
     ```
-    *Copy this long string. You'll need it for Vercel.*
+    *Copy this long string. You'll need it for Render.*
 
 ---
 
-## Step 3: Deploy to Vercel
-Vercel will host your Node.js backend and frontend.
+## Step 3: Set up Brevo for Email OTPs
+Since registration requires OTPs, you need an email service.
 
-1.  Go to your [Vercel Dashboard](https://vercel.com/dashboard).
-2.  Click **"Add New..."** -> **"Project"**.
-3.  Import your `nova-credit` repository from GitHub.
-4.  **Configure Project**:
-    *   **Framework Preset**: Select `Other` (or leave default, Vercel detects `package.json`).
-    *   **Root Directory**: `./` (default).
-    *   **Environment Variables**: Expand this section and add:
-        *   `TURSO_DATABASE_URL`: Paste the URL from Step 2.4.
-        *   `TURSO_AUTH_TOKEN`: Paste the Token from Step 2.5.
-        *   `JWT_SECRET`: Enter a secure random string (e.g., `my-super-secret-key-123`).
-5.  Click **"Deploy"**.
+1.  Sign up for a free account at [Brevo (formerly Sendinblue)](https://www.brevo.com/).
+2.  Go to **SMTP & API** settings and generate a new **API Key**.
+3.  Go to **Senders & IP** and verify the email address you want to send from (e.g., your personal email).
+4.  Copy the **API Key** and the **Sender Email**. You'll need these for Step 4.
 
 ---
 
-## Step 4: Verify & Custom Domain
-1.  Wait for the deployment to finish (usually < 1 minute).
-2.  Click on the **Domain** provided by Vercel (e.g., `nova-credit.vercel.app`).
-3.  **Test it**: Try registering a new user. If it works, your database is connected!
+## Step 4: Deploy to Render
+Render will host your Node.js backend and frontend.
+
+1.  Go to your [Render Dashboard](https://dashboard.render.com).
+2.  Click **"New"** -> **"Web Service"**.
+3.  Connect your GitHub account and select your `nova-credit` repository.
+4.  **Configure Web Service**:
+    *   **Name**: `nova-credit`
+    *   **Region**: Select the closest one to you
+    *   **Branch**: `main`
+    *   **Runtime**: `Node`
+    *   **Build Command**: `npm install`
+    *   **Start Command**: `npm start`
+    *   **Instance Type**: `Free`
+5.  **Environment Variables**: Click "Advanced" and add:
+    *   `TURSO_DATABASE_URL`: Paste the URL from Step 2.4.
+    *   `TURSO_AUTH_TOKEN`: Paste the Token from Step 2.5.
+    *   `JWT_SECRET`: Enter a secure random string (e.g., `my-super-secret-key-123`).
+    *   `BREVO_API_KEY`: Paste your API Key from Step 3.2.
+    *   `BREVO_SENDER_EMAIL`: Paste your verified sender email from Step 3.3.
+    *   `PORT`: `3000`
+6.  Click **"Create Web Service"**.
+
+---
+
+## Step 5: Verify & Custom Domain
+1.  Wait for the deployment to finish (it may take a few minutes on the Free plan).
+2.  Click on the **URL** provided by Render (e.g., `https://nova-credit-xxxx.onrender.com`).
+3.  **Test it**: Try registering a new user. If you receive an OTP in your email, everything is working!
 4.  **Custom Domain**:
-    *   Go to **Settings** -> **Domains** in your Vercel project.
+    *   Go to the **Settings** tab of your Web Service in Render.
+    *   Scroll down to **Custom Domains** and click "Add Custom Domain".
     *   Enter your custom domain (e.g., `novacredit.com`).
-    *   Follow the DNS instructions provided by Vercel to update your domain registrar (GoDaddy, Namecheap, etc.).
+    *   Follow the DNS instructions provided by Render to update your domain registrar.
 
 ---
 
 ## ☁️ You are now fully cloud-native!
-You can close your laptop. The app is running on Vercel's servers and the data is safe in Turso's cloud.
+You can close your laptop. The app is running on Render's servers and the data is safe in Turso's cloud.
