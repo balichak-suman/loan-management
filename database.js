@@ -5,10 +5,14 @@ require('dotenv').config();
 // Configuration
 const DATABASE_URL = process.env.DATABASE_URL;
 
+if (!DATABASE_URL) {
+  console.error('❌ Error: DATABASE_URL is not defined in environment variables');
+}
+
 console.log('🔌 Connecting to Supabase PostgreSQL Database...');
 const pool = new Pool({
   connectionString: DATABASE_URL,
-  ssl: DATABASE_URL.includes('localhost') ? false : { rejectUnauthorized: false }
+  ssl: DATABASE_URL && DATABASE_URL.includes('localhost') ? false : { rejectUnauthorized: false }
 });
 
 // Unified Query Executor
