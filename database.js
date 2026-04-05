@@ -5,7 +5,7 @@ require('dotenv').config();
 // Configuration
 const DATABASE_URL = process.env.DATABASE_URL;
 
-console.log('🔌 Connecting to PostgreSQL Database...');
+console.log('🔌 Connecting to Supabase PostgreSQL Database...');
 const pool = new Pool({
   connectionString: DATABASE_URL,
   ssl: DATABASE_URL.includes('localhost') ? false : { rejectUnauthorized: false }

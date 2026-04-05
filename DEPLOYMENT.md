@@ -5,7 +5,7 @@ This guide will help you deploy your application to the cloud for **free** and k
 ## Prerequisites
 - [GitHub Account](https://github.com)
 - [Render Account](https://render.com) (Log in with GitHub)
-- [Turso Account](https://turso.tech) (Log in with GitHub)
+- [Supabase Account](https://supabase.com) (Log in with GitHub)
 
 ---
 
@@ -26,31 +26,26 @@ Since you want to move off your laptop, the code needs to live in a repository.
 
 ---
 
-## Step 2: Set up Turso Database
-Turso provides a free, persistent SQLite database in the cloud.
+## Step 2: Set up Supabase Database
+Supabase provides a free, managed PostgreSQL database in the cloud.
 
-1.  **Install the Turso CLI** (if you haven't):
-    ```bash
-    brew install tursodatabase/tap/turso
-    ```
-2.  **Login to Turso**:
-    ```bash
-    turso auth login
-    ```
-3.  **Create a Database**:
-    ```bash
-    turso db create nova-credit-db
-    ```
-4.  **Get the Database URL**:
-    ```bash
-    turso db show nova-credit-db --url
-    ```
-    *Copy this URL (starts with `libsql://`). You'll need it for Render.*
-5.  **Create an Auth Token**:
-    ```bash
-    turso db tokens create nova-credit-db
-    ```
-    *Copy this long string. You'll need it for Render.*
+1.  **Sign up / Log in** at [supabase.com](https://supabase.com).
+2.  **Create a New Project**:
+    - Click "New Project"
+    - Choose an organization (or create one)
+    - Enter a **Project Name** (e.g., `nova-credit`)
+    - Set a strong **Database Password** (save this!)
+    - Select a **Region** close to your Render deployment
+    - Click "Create new project"
+3.  **Get the Connection String**:
+    - Go to **Project Settings** → **Database**
+    - Under **Connection string**, select the **URI** tab
+    - Copy the connection string — it looks like:
+      ```
+      postgresql://postgres.[project-ref]:[YOUR-PASSWORD]@aws-0-[region].pooler.supabase.com:6543/postgres
+      ```
+    - Replace `[YOUR-PASSWORD]` with the database password you set in step 2
+    - **Use port `6543`** (Transaction pooler mode) for Render deployments
 
 ---
 
@@ -72,15 +67,14 @@ Render will host your Node.js backend and frontend.
 3.  Connect your GitHub account and select your `nova-credit` repository.
 4.  **Configure Web Service**:
     *   **Name**: `nova-credit`
-    *   **Region**: Select the closest one to you
+    *   **Region**: Select the closest one to you (ideally same region as your Supabase project)
     *   **Branch**: `main`
     *   **Runtime**: `Node`
     *   **Build Command**: `npm install`
     *   **Start Command**: `npm start`
     *   **Instance Type**: `Free`
 5.  **Environment Variables**: Click "Advanced" and add:
-    *   `TURSO_DATABASE_URL`: Paste the URL from Step 2.4.
-    *   `TURSO_AUTH_TOKEN`: Paste the Token from Step 2.5.
+    *   `DATABASE_URL`: Paste the Supabase connection string from Step 2.3.
     *   `JWT_SECRET`: Enter a secure random string (e.g., `my-super-secret-key-123`).
     *   `BREVO_API_KEY`: Paste your API Key from Step 3.2.
     *   `BREVO_SENDER_EMAIL`: Paste your verified sender email from Step 3.3.
@@ -102,4 +96,5 @@ Render will host your Node.js backend and frontend.
 ---
 
 ## ☁️ You are now fully cloud-native!
-You can close your laptop. The app is running on Render's servers and the data is safe in Turso's cloud.
+You can close your laptop. The app is running on Render's servers and the data is safe in Supabase's cloud.
+

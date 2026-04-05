@@ -50,6 +50,17 @@ app.use(express.static(path.join(process.cwd(), 'public')));
         const { startScheduler } = require('./scheduler');
         startScheduler();
         console.log('✅ Loan notification scheduler initialized');
+
+        // Supabase keep-alive ping (prevents free tier from pausing after 1 week of inactivity)
+        setInterval(async () => {
+            try {
+                await executeSQL('SELECT 1');
+                console.log(`💓 Supabase keep-alive ping successful at ${new Date().toISOString()}`);
+            } catch (err) {
+                console.error('❌ Supabase keep-alive ping failed:', err.message);
+            }
+        }, 6 * 60 * 60 * 1000); // Every 6 hours
+        console.log('✅ Supabase keep-alive scheduler initialized (every 6 hours)');
     } catch (err) {
         console.error('Initialization error:', err);
     }
@@ -70,8 +81,7 @@ app.get('/api/debug', async (req, res) => {
             db_connected: true,
             user_count: user ? user.count : 0,
             env: {
-                has_db_url: !!process.env.TURSO_DATABASE_URL,
-                has_auth_token: !!process.env.TURSO_AUTH_TOKEN
+                has_db_url: !!process.env.DATABASE_URL
             }
         });
     } catch (error) {
