@@ -1,37 +1,37 @@
 :root {
   /* Color Palette - Premium Gradients */
-  --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-  --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  --primary-gradient: linear-gradient(135deg, #72dcff 0%, #a68cff 100%);
+  --secondary-gradient: linear-gradient(135deg, #a68cff 0%, #591adc 100%);
+  --success-gradient: linear-gradient(135deg, #81ecff 0%, #00d2ff 100%);
   --warning-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-  --danger-gradient: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+  --danger-gradient: linear-gradient(135deg, #ff716c 0%, #d7383b 100%);
 
   /* Solid Colors */
-  --primary: #667eea;
-  --primary-dark: #5568d3;
-  --secondary: #764ba2;
-  --success: #00f2fe;
+  --primary: #72dcff;
+  --primary-dark: #00d2ff;
+  --secondary: #a68cff;
+  --success: #81ecff;
   --warning: #fee140;
-  --danger: #ff6b6b;
+  --danger: #ff716c;
 
   /* Neutral Colors */
-  --bg-primary: #0f0f1e;
-  --bg-secondary: #1a1a2e;
-  --bg-tertiary: #252540;
-  --bg-card: rgba(255, 255, 255, 0.05);
-  --bg-card-hover: rgba(255, 255, 255, 0.08);
+  --bg-primary: #090e18;
+  --bg-secondary: #0e131e;
+  --bg-tertiary: #141a26;
+  --bg-card: rgba(31, 38, 52, 0.6);
+  --bg-card-hover: rgba(31, 38, 52, 0.8);
 
   /* Text Colors */
-  --text-primary: #ffffff;
-  --text-secondary: #b8b8d1;
-  --text-muted: #6b6b8c;
+  --text-primary: #e4e8f7;
+  --text-secondary: #a6abb9;
+  --text-muted: #505561;
 
   /* Border & Shadow */
-  --border-color: rgba(255, 255, 255, 0.1);
+  --border-color: rgba(67, 72, 84, 0.5);
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
   --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.3);
   --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.4);
-  --glow: 0 0 20px rgba(102, 126, 234, 0.3);
+  --glow: 0 0 20px rgba(114, 220, 255, 0.3);
 
   /* Spacing */
   --spacing-xs: 0.5rem;
@@ -93,8 +93,8 @@ body::before {
   width: 100%;
   height: 100%;
   background:
-    radial-gradient(circle at 20% 50%, rgba(102, 126, 234, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 80% 80%, rgba(118, 75, 162, 0.1) 0%, transparent 50%);
+    radial-gradient(circle at 20% 50%, rgba(114, 220, 255, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(166, 140, 255, 0.05) 0%, transparent 50%);
   z-index: -1;
   animation: backgroundPulse 10s ease-in-out infinite;
 }

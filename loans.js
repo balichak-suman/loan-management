@@ -45,8 +45,7 @@ function calculateLoanDetails(loan) {
         daysOverdue = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         if (daysOverdue < 0) daysOverdue = 0;
 
-        const penaltyRate = 1300 / 10000;
-        penaltyAmount = loan_amount * penaltyRate * daysOverdue;
+        penaltyAmount = 1250 * daysOverdue;
     }
 
     const totalDue = currentBalance + penaltyAmount;

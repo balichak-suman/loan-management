@@ -23,7 +23,7 @@ async function initializeApp() {
         AppState.user = JSON.parse(user);
         showMainApp();
     } else {
-        showAuthPage();
+        showLandingPage();
     }
 
     // Hide loading screen
@@ -205,6 +205,6 @@ function logout() {
     localStorage.removeItem('nova_credit_user');
     AppState.token = null;
     AppState.user = null;
-    showAuthPage();
+    showLandingPage();
     showToast('Logged out successfully', 'success');
 }
