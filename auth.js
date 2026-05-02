@@ -1,7 +1,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { dbHelpers, executeSQL } = require('./database');
-const { sendOTP } = require('./email');
+const { sendOTP, sendWelcomeEmail } = require('./email');
 
 // In-memory OTP store (In production, use Redis or DB with expiry)
 const otpStore = new Map();
@@ -98,6 +98,9 @@ async function register(req, res) {
 
         // Clear OTP
         otpStore.delete(email);
+
+        // Send welcome email asynchronously
+        sendWelcomeEmail(email, fullName).catch(err => console.error('Failed to send welcome email:', err));
 
         res.status(201).json({
             success: true,

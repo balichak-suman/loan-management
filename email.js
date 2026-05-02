@@ -121,4 +121,22 @@ async function sendPenaltyAlert(email, loanDetails) {
     });
 }
 
-module.exports = { sendEmail, sendOTP, sendLoanConfirmation, sendDueDateReminder, sendPenaltyAlert };
+async function sendWelcomeEmail(email, fullName) {
+    return sendEmail({
+        to: email,
+        subject: "Welcome to Nova Credit!",
+        htmlContent: `
+            <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 5px; border-top: 5px solid #4a90e2;">
+                <h2 style="color: #4a90e2;">Welcome to Nova Credit!</h2>
+                <p>Hello ${fullName},</p>
+                <p>Thank you for registering with Nova Credit. Your account has been successfully created.</p>
+                <div style="background: #f9f9f9; padding: 15px; border-left: 4px solid #4a90e2; margin: 20px 0;">
+                    <p>We will review your details and let you know if you are eligible for applying for a loan in Nova Credit.</p>
+                </div>
+                <p>Thank you,<br>The Nova Credit Team</p>
+            </div>
+        `
+    });
+}
+
+module.exports = { sendEmail, sendOTP, sendLoanConfirmation, sendDueDateReminder, sendPenaltyAlert, sendWelcomeEmail };

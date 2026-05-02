@@ -1,5 +1,5 @@
 // Authentication Pages
-function renderAuthPage() {
+function renderAuthPage(mode = 'login') {
   const pageContent = document.getElementById('page-content');
   pageContent.classList.add('full-bleed');
   
@@ -26,8 +26,8 @@ function renderAuthPage() {
           </div>
           
           <div id="auth-tabs" class="flex p-1 bg-surface-container rounded-xl mb-8 relative z-10">
-            <button class="flex-1 py-2.5 rounded-lg text-sm font-bold transition-all auth-tab-btn active bg-surface-variant text-on-surface" onclick="showLoginForm(this)">Login</button>
-            <button class="flex-1 py-2.5 rounded-lg text-sm font-bold transition-all auth-tab-btn text-on-surface-variant hover:text-on-surface" onclick="showRegisterForm(this)">Register</button>
+            <button id="auth-tab-login" class="flex-1 py-2.5 rounded-lg text-sm font-bold transition-all auth-tab-btn" onclick="showLoginForm(this)">Login</button>
+            <button id="auth-tab-register" class="flex-1 py-2.5 rounded-lg text-sm font-bold transition-all auth-tab-btn" onclick="showRegisterForm(this)">Register</button>
           </div>
           
           <div id="auth-form-container" class="relative z-10"></div>
@@ -40,7 +40,11 @@ function renderAuthPage() {
     </div>
   `;
 
-  showLoginForm();
+  if (mode === 'register') {
+    showRegisterForm(document.getElementById('auth-tab-register'));
+  } else {
+    showLoginForm(document.getElementById('auth-tab-login'));
+  }
 }
 
 function showLoginForm(btn) {

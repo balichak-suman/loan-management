@@ -31,7 +31,7 @@ function showLandingPage() {
                     Experience cloud-native financial management. Instant approvals, real-time insights, and vault-grade security for the modern age.
                 </p>
 <div class="flex flex-col gap-4 items-center">
-<button onclick="showAuthPage()" class="w-full max-w-xs py-4 rounded-xl bg-gradient-to-r from-primary to-primary-container text-on-primary font-bold text-lg shadow-lg shadow-primary/20 hover:opacity-90 active:scale-95 transition-all">
+<button onclick="showAuthPage('register')" class="w-full max-w-xs py-4 rounded-xl bg-gradient-to-r from-primary to-primary-container text-on-primary font-bold text-lg shadow-lg shadow-primary/20 hover:opacity-90 active:scale-95 transition-all">
                         Get Started
                     </button>
 <button onclick="showAuthPage()" class="w-full max-w-xs py-4 rounded-xl bg-surface-variant/40 text-on-surface font-semibold border border-outline-variant/20 active:scale-95 transition-all">
@@ -146,7 +146,7 @@ function showLandingPage() {
 <section class="px-4 sm:px-6 py-16 sm:py-24 text-center bg-[#0e131e] relative">
 <div class="relative z-10">
 <h2 class="text-2xl sm:text-3xl font-extrabold mb-6 sm:mb-8 leading-tight">Ready to unlock your <br class="hidden sm:block"/>financial potential?</h2>
-<button onclick="showAuthPage()" class="w-full sm:w-auto px-10 py-4 rounded-xl bg-gradient-to-r from-primary to-secondary text-on-primary font-bold text-lg active:scale-95 transition-all mb-6 sm:mb-8">
+<button onclick="showAuthPage('register')" class="w-full sm:w-auto px-10 py-4 rounded-xl bg-gradient-to-r from-primary to-secondary text-on-primary font-bold text-lg active:scale-95 transition-all mb-6 sm:mb-8">
                     Create Free Account
                 </button>
 

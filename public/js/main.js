@@ -33,9 +33,9 @@ async function initializeApp() {
     }, 500);
 }
 
-function showAuthPage() {
+function showAuthPage(mode = 'login') {
     document.getElementById('navbar').style.display = 'none';
-    renderAuthPage();
+    renderAuthPage(mode);
 }
 
 function showMainApp() {
