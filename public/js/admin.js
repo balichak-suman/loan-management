@@ -985,7 +985,9 @@ function renderTransactionsTable(transactions) {
               <td>#${t.id}</td>
               <td>${t.username || 'Unknown'}</td>
               <td><span class="badge badge-${getTransactionTypeBadge(t.transaction_type)}">${t.transaction_type}</span></td>
-              <td style="font-weight: 600;">${formatCurrency(t.amount)}</td>
+              <td style="font-weight: 700; color: ${['payment', 'credit'].includes(t.transaction_type) ? 'var(--success)' : 'var(--danger)'};">
+                ${['payment', 'credit'].includes(t.transaction_type) ? '+' : '-'}${formatCurrency(t.amount)}
+              </td>
               <td>${t.description || 'N/A'}</td>
               <td>${formatDate(t.transaction_date)}</td>
               <td>

@@ -80,8 +80,8 @@ async function renderTransactionsPage() {
                           </span>
                         </td>
                         <td>${txn.description}</td>
-                        <td style="font-weight: 700; color: ${txn.transaction_type === 'payment' ? 'var(--success)' : 'var(--primary)'};">
-                          ${txn.transaction_type === 'payment' ? '-' : '+'}${formatCurrency(txn.amount)}
+                        <td style="font-weight: 700; color: ${['payment', 'credit'].includes(txn.transaction_type) ? 'var(--success)' : 'var(--danger)'};">
+                          ${['payment', 'credit'].includes(txn.transaction_type) ? '+' : '-'}${formatCurrency(txn.amount)}
                         </td>
                         <td style="font-weight: 600;">${formatCurrency(txn.balance_after || 0)}</td>
                       </tr>
