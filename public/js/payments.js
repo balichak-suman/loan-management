@@ -173,7 +173,7 @@ function showPaymentForm(loanId, amount, loanName) {
       <form id="payment-form">
         <div class="form-group" style="text-align: left;">
           <label class="form-label">Payment Amount (₹)</label>
-          <input type="number" id="payment-amount" class="form-input" value="${amount}" readonly style="background-color: var(--bg-secondary); cursor: not-allowed;">
+          <input type="text" id="payment-amount" class="form-input" value="${amount}" disabled style="background-color: var(--bg-tertiary); cursor: not-allowed; font-weight: 700; color: var(--primary); border: 1px solid var(--primary);">
         </div>
         
         <div class="form-group" style="text-align: left;">
