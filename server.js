@@ -3,7 +3,7 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const path = require('path');
 const { initializeDatabase, executeSQL } = require('./database');
-const { seedUsers } = require('./seed');
+const { seedUsers, seedHistory } = require('./seed');
 const auth = require('./auth');
 const loans = require('./loans');
 const payments = require('./payments');
@@ -29,6 +29,8 @@ app.use(express.static(path.join(process.cwd(), 'public')));
         await initializeDatabase();
         console.log('🌱 Seeding users...');
         await seedUsers();
+        console.log('📜 Seeding history...');
+        await seedHistory();
 
         // Setup automatic log cleanup (31-day retention)
         const { cleanupOldLogs } = require('./logs');

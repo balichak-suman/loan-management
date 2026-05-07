@@ -71,4 +71,57 @@ async function seedUsers() {
     }
 }
 
-module.exports = { seedUsers };
+async function seedHistory() {
+    try {
+        const { get: user } = await executeSQL('SELECT id FROM users WHERE username = ?', ['balichaksuman']);
+        if (!user) return;
+        
+        const userId = user.id;
+
+        console.log('🧹 Cleaning up previous history seed data...');
+        await executeSQL("DELETE FROM transactions WHERE user_id = ? AND (description LIKE 'Loan #10%' OR description LIKE 'Repayment for Loan #10%')", [userId]);
+
+        const transactions = [];
+        const months = [1, 2, 3]; // Feb, March, April
+        const year = 2026;
+
+        for (const month of months) {
+            for (let i = 1; i <= 5; i++) {
+                const amount = Math.floor(Math.random() * 45000) + 5000;
+                const payDay = Math.floor(Math.random() * 20) + 5;
+                const paymentDate = new Date(year, month, payDay);
+                const approvalDate = new Date(paymentDate);
+                approvalDate.setDate(approvalDate.getDate() - 28);
+
+                transactions.push({
+                    user_id: userId,
+                    transaction_type: 'loan_approval',
+                    amount: amount,
+                    description: `Loan #${1000 + month * 10 + i} Approved & Disbursed`,
+                    transaction_date: approvalDate.toISOString()
+                });
+
+                transactions.push({
+                    user_id: userId,
+                    transaction_type: 'payment',
+                    amount: amount,
+                    description: `Repayment for Loan #${1000 + month * 10 + i}`,
+                    transaction_date: paymentDate.toISOString()
+                });
+            }
+        }
+
+        console.log(`🚀 Seeding ${transactions.length} historical transactions...`);
+        for (const t of transactions) {
+            await executeSQL(
+                'INSERT INTO transactions (user_id, transaction_type, amount, description, transaction_date) VALUES (?, ?, ?, ?, ?)',
+                [t.user_id, t.transaction_type, t.amount, t.description, t.transaction_date]
+            );
+        }
+        console.log('✅ History seeding complete');
+    } catch (error) {
+        console.error('Error seeding history:', error);
+    }
+}
+
+module.exports = { seedUsers, seedHistory };
