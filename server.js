@@ -20,14 +20,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // Serve static files
 // Use process.cwd() for Vercel compatibility
-app.use(express.static(path.join(process.cwd(), 'public'), {
-    setHeaders: (res, filePath) => {
-        if (filePath.endsWith('.apk')) {
-            res.set('Content-Type', 'application/vnd.android.package-archive');
-            res.set('Content-Disposition', 'attachment; filename="novacredit.apk"');
-        }
-    }
-}));
+app.use(express.static(path.join(process.cwd(), 'public')));
 
 // Initialize database and seed users
 (async () => {
