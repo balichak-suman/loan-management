@@ -32,12 +32,8 @@ function renderAuthPage(mode = 'login') {
           
           <div id="auth-form-container" class="relative z-10"></div>
           
-          <div class="mt-8 text-center pt-6 border-t border-outline-variant/10 relative z-10 space-y-4">
-            <a href="/downloads/novacredit.apk" class="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-surface-container border border-outline-variant/20 text-on-surface hover:bg-surface-container-high active:scale-95 transition-all" download>
-              <span class="material-symbols-outlined text-primary text-xl" data-icon="android">android</span>
-              <span class="text-sm font-bold">Get Nova for Android</span>
-            </a>
-            <a href="#" class="block text-primary text-xs font-bold hover:underline" onclick="showLandingPage()">Back to Main Platform</a>
+          <div class="mt-8 text-center pt-6 border-t border-outline-variant/10 relative z-10">
+            <a href="#" class="text-primary text-xs font-bold hover:underline" onclick="showLandingPage()">Back to Main Platform</a>
           </div>
         </div>
       </div>
