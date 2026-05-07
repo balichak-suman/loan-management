@@ -63,7 +63,7 @@ async function renderTransactionsPage() {
                 <table class="table" id="transactions-table">
                   <thead>
                     <tr>
-                      <th>Date & Time</th>
+                      <th>Date</th>
                       <th>Type</th>
                       <th>Description</th>
                       <th>Amount</th>
@@ -73,7 +73,7 @@ async function renderTransactionsPage() {
                   <tbody>
                     ${transactionsData.transactions.map(txn => `
                       <tr class="transaction-row" data-type="${txn.transaction_type}" data-description="${txn.description.toLowerCase()}">
-                        <td style="white-space: nowrap;">${formatDateTime(txn.transaction_date)}</td>
+                        <td style="white-space: nowrap;">${formatDate(txn.transaction_date)}</td>
                         <td>
                           <span class="badge badge-${txn.transaction_type === 'payment' ? 'success' : 'primary'}">
                             ${txn.transaction_type === 'payment' ? '💳' : '💰'} ${txn.transaction_type.replace('_', ' ')}

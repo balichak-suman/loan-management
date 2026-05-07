@@ -987,7 +987,7 @@ function renderTransactionsTable(transactions) {
               <td><span class="badge badge-${getTransactionTypeBadge(t.transaction_type)}">${t.transaction_type}</span></td>
               <td style="font-weight: 600;">${formatCurrency(t.amount)}</td>
               <td>${t.description || 'N/A'}</td>
-              <td>${new Date(t.transaction_date).toLocaleString()}</td>
+              <td>${formatDate(t.transaction_date)}</td>
               <td>
                 <button class="btn btn-sm btn-primary" onclick='editTransaction(${JSON.stringify(t).replace(/'/g, "&apos;")})'> 
                   ✏️ Edit
