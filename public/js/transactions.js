@@ -553,8 +553,8 @@ async function generateBankStatement() {
             </div>
             <div class="info-card">
               <div class="section-title">Account Details</div>
-              Customer ID: <span class="mono">${user.id.toString().padStart(8, '0')}</span><br>
-              Account No: <span class="mono">30990422${user.id.toString().padStart(4, '0')}</span><br>
+              Customer ID: <span class="mono">${user.id}</span><br>
+              Account No: <span class="mono">30990422${user.id.replace(/[^0-9]/g, '').slice(-4).padStart(4, '7')}</span><br>
               Account Type: PERSONAL CREDIT LINE<br>
               Currency: INDIAN RUPEE (INR)
             </div>

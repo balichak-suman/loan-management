@@ -39,7 +39,7 @@ async function executeSQL(sql, params = []) {
 async function initializeDatabase() {
   const tables = [
     `CREATE TABLE IF NOT EXISTS users (
-      id SERIAL PRIMARY KEY,
+      id TEXT PRIMARY KEY,
       username TEXT UNIQUE NOT NULL,
       email TEXT UNIQUE NOT NULL,
       password TEXT NOT NULL,
@@ -53,7 +53,7 @@ async function initializeDatabase() {
     )`,
     `CREATE TABLE IF NOT EXISTS credit_cards (
       id SERIAL PRIMARY KEY,
-      user_id INTEGER NOT NULL,
+      user_id TEXT NOT NULL,
       card_number TEXT NOT NULL,
       card_holder TEXT NOT NULL,
       expiry_date TEXT NOT NULL,
@@ -66,7 +66,7 @@ async function initializeDatabase() {
     )`,
     `CREATE TABLE IF NOT EXISTS loans (
       id SERIAL PRIMARY KEY,
-      user_id INTEGER NOT NULL,
+      user_id TEXT NOT NULL,
       loan_amount DECIMAL NOT NULL,
       interest_rate DECIMAL DEFAULT 6.0,
       outstanding_balance DECIMAL NOT NULL,
@@ -87,7 +87,7 @@ async function initializeDatabase() {
     )`,
     `CREATE TABLE IF NOT EXISTS payments (
       id SERIAL PRIMARY KEY,
-      user_id INTEGER NOT NULL,
+      user_id TEXT NOT NULL,
       loan_id INTEGER NOT NULL,
       payment_amount DECIMAL NOT NULL,
       payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -99,7 +99,7 @@ async function initializeDatabase() {
     )`,
     `CREATE TABLE IF NOT EXISTS transactions (
       id SERIAL PRIMARY KEY,
-      user_id INTEGER NOT NULL,
+      user_id TEXT NOT NULL,
       transaction_type TEXT NOT NULL,
       amount DECIMAL NOT NULL,
       description TEXT,
@@ -117,7 +117,7 @@ async function initializeDatabase() {
     )`,
     `CREATE TABLE IF NOT EXISTS admin_logs (
       id SERIAL PRIMARY KEY,
-      admin_id INTEGER NOT NULL,
+      admin_id TEXT NOT NULL,
       admin_username TEXT NOT NULL,
       action_type TEXT NOT NULL,
       target_entity TEXT,
@@ -137,23 +137,19 @@ async function initializeDatabase() {
 
     // Migrations
     const migrations = [
-      "ALTER TABLE users ADD COLUMN pan_card TEXT",
-      "ALTER TABLE users ADD COLUMN credit_limit DECIMAL DEFAULT 10000",
-      "ALTER TABLE loans ADD COLUMN comments TEXT",
-      "ALTER TABLE loans ADD COLUMN bank_name TEXT",
-      "ALTER TABLE loans ADD COLUMN account_number TEXT",
-      "ALTER TABLE loans ADD COLUMN ifsc_code TEXT",
-      "ALTER TABLE payments ADD COLUMN proof_image TEXT"
+      "ALTER TABLE users ALTER COLUMN id TYPE TEXT",
+      "ALTER TABLE credit_cards ALTER COLUMN user_id TYPE TEXT",
+      "ALTER TABLE loans ALTER COLUMN user_id TYPE TEXT",
+      "ALTER TABLE payments ALTER COLUMN user_id TYPE TEXT",
+      "ALTER TABLE transactions ALTER COLUMN user_id TYPE TEXT",
+      "ALTER TABLE admin_logs ALTER COLUMN admin_id TYPE TEXT"
     ];
 
     for (const sql of migrations) {
       try {
         await executeSQL(sql);
       } catch (err) {
-        // Ignore duplicate column errors
-        if (!err.message.includes('already exists') && !err.message.includes('duplicate column')) {
-          // console.log('Migration note:', err.message);
-        }
+        // console.log('Migration note:', err.message);
       }
     }
 
@@ -165,9 +161,45 @@ async function initializeDatabase() {
     `);
 
     console.log('✅ Database initialized successfully');
+
+    // MIGRATION: Convert existing numeric IDs to random strings
+    try {
+      const { rows: numericUsers } = await executeSQL("SELECT id FROM users WHERE id ~ '^[0-9]+$'");
+      if (numericUsers.length > 0) {
+        console.log(`🔄 Migrating ${numericUsers.length} users with numeric IDs to random strings...`);
+        for (const user of numericUsers) {
+          const oldId = user.id;
+          const newId = generateUserId();
+          
+          // Update all references first (Foreign Keys)
+          await executeSQL('UPDATE credit_cards SET user_id = ? WHERE user_id = ?', [newId, oldId]);
+          await executeSQL('UPDATE loans SET user_id = ? WHERE user_id = ?', [newId, oldId]);
+          await executeSQL('UPDATE payments SET user_id = ? WHERE user_id = ?', [newId, oldId]);
+          await executeSQL('UPDATE transactions SET user_id = ? WHERE user_id = ?', [newId, oldId]);
+          await executeSQL('UPDATE admin_logs SET admin_id = ? WHERE admin_id = ?', [newId, oldId]);
+          
+          // Finally update the user itself
+          await executeSQL('UPDATE users SET id = ? WHERE id = ?', [newId, oldId]);
+          console.log(`✅ Migrated User ${oldId} -> ${newId}`);
+        }
+      }
+    } catch (migErr) {
+      console.error('Migration warning:', migErr.message);
+    }
+
   } catch (err) {
     console.error('❌ Database initialization failed:', err);
   }
+}
+
+// Helper to generate random User ID
+function generateUserId() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // No O, 0, I, 1 to avoid confusion
+  let result = 'NC';
+  for (let i = 0; i < 6; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
 }
 
 // Helper functions
@@ -192,11 +224,12 @@ const dbHelpers = {
 
   // Create user
   createUser: async (username, email, hashedPassword, fullName, phone, panCard) => {
-    const result = await executeSQL(
-      'INSERT INTO users (username, email, password, full_name, phone, pan_card) VALUES (?, ?, ?, ?, ?, ?) RETURNING id',
-      [username, email, hashedPassword, fullName, phone, panCard]
+    const userId = generateUserId();
+    await executeSQL(
+      'INSERT INTO users (id, username, email, password, full_name, phone, pan_card) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [userId, username, email, hashedPassword, fullName, phone, panCard]
     );
-    return result.lastID;
+    return userId;
   },
 
   // Get all loans for user
