@@ -79,39 +79,57 @@ async function seedHistory() {
         const userId = user.id;
 
         console.log('🧹 Cleaning up previous history seed data...');
-        await executeSQL("DELETE FROM transactions WHERE user_id = ? AND (description LIKE 'Loan #10%' OR description LIKE 'Repayment for Loan #10%')", [userId]);
+        // Clean up both our previous ones and any that match our patterns
+        await executeSQL("DELETE FROM transactions WHERE user_id = ? AND (description LIKE 'Loan #10%' OR description LIKE 'Repayment for Loan #10%' OR description LIKE 'Application for Loan #10%')", [userId]);
 
         const transactions = [];
         const months = [1, 2, 3]; // Feb, March, April
         const year = 2026;
 
         for (const month of months) {
-            for (let i = 1; i <= 5; i++) {
+            for (let i = 1; i <= 10; i++) {
                 const amount = Math.floor(Math.random() * 45000) + 5000;
                 const payDay = Math.floor(Math.random() * 20) + 5;
                 const paymentDate = new Date(year, month, payDay);
+                
                 const approvalDate = new Date(paymentDate);
                 approvalDate.setDate(approvalDate.getDate() - 28);
+                
+                const applicationDate = new Date(approvalDate);
+                applicationDate.setDate(applicationDate.getDate() - 2);
 
+                const loanId = 1000 + month * 20 + i;
+
+                // 1. Loan Application
                 transactions.push({
                     user_id: userId,
-                    transaction_type: 'loan_approval',
+                    transaction_type: 'loan_application',
                     amount: amount,
-                    description: `Loan #${1000 + month * 10 + i} Approved & Disbursed`,
+                    description: `Application for Loan #${loanId}`,
+                    transaction_date: applicationDate.toISOString()
+                });
+
+                // 2. Loan Approval
+                transactions.push({
+                    user_id: userId,
+                    transaction_type: 'loan_approved',
+                    amount: amount,
+                    description: `Loan #${loanId} Approved & Disbursed`,
                     transaction_date: approvalDate.toISOString()
                 });
 
+                // 3. Payment
                 transactions.push({
                     user_id: userId,
                     transaction_type: 'payment',
                     amount: amount,
-                    description: `Repayment for Loan #${1000 + month * 10 + i}`,
+                    description: `Repayment for Loan #${loanId}`,
                     transaction_date: paymentDate.toISOString()
                 });
             }
         }
 
-        console.log(`🚀 Seeding ${transactions.length} historical transactions...`);
+        console.log(`🚀 Seeding ${transactions.length} historical transactions (Applications, Approvals, Payments)...`);
         for (const t of transactions) {
             await executeSQL(
                 'INSERT INTO transactions (user_id, transaction_type, amount, description, transaction_date) VALUES (?, ?, ?, ?, ?)',
