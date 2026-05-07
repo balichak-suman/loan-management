@@ -277,118 +277,357 @@ async function generateBankStatement() {
       <head>
         <title>Account Statement - ${user.fullName}</title>
         <style>
-          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-          body { font-family: 'Inter', sans-serif; color: #1a1a1a; padding: 40px; line-height: 1.5; }
-          .header { display: flex; justify-content: space-between; border-bottom: 2px solid #0052cc; padding-bottom: 20px; margin-bottom: 30px; }
-          .logo { font-size: 24px; font-weight: 800; color: #0052cc; letter-spacing: -1px; }
-          .bank-info { text-align: right; font-size: 12px; color: #666; }
+          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
           
-          .statement-title { font-size: 20px; font-weight: 700; text-align: center; margin-bottom: 30px; text-transform: uppercase; letter-spacing: 2px; }
-          
-          .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 30px; font-size: 13px; }
-          .info-section h4 { margin: 0 0 10px 0; color: #0052cc; text-transform: uppercase; font-size: 11px; }
-          .info-box { background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #eee; }
-          
-          .summary-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; font-size: 13px; }
-          .summary-table th { background: #0052cc; color: white; padding: 10px; text-align: left; }
-          .summary-table td { border: 1px solid #eee; padding: 10px; }
-          
-          .txn-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-          .txn-table th { background: #f1f3f5; padding: 12px 10px; text-align: left; border-bottom: 2px solid #dee2e6; }
-          .txn-table td { padding: 12px 10px; border-bottom: 1px solid #eee; }
+          :root {
+            --bank-blue: #003366;
+            --bank-gold: #b38b00;
+            --text-main: #1a1a1a;
+            --text-muted: #4a4a4a;
+            --border-light: #e0e0e0;
+          }
+
+          body { 
+            font-family: 'Inter', sans-serif; 
+            color: var(--text-main); 
+            padding: 0; 
+            margin: 0;
+            background: #f0f2f5;
+          }
+
+          .page {
+            width: 210mm;
+            min-height: 297mm;
+            padding: 20mm;
+            margin: 10mm auto;
+            background: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+          }
+
+          /* Watermark */
+          .page::before {
+            content: "NOVA CREDIT OFFICIAL";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 80px;
+            font-weight: 900;
+            color: rgba(0, 51, 102, 0.03);
+            white-space: nowrap;
+            pointer-events: none;
+            z-index: 0;
+          }
+
+          .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 3px solid var(--bank-blue);
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+            position: relative;
+            z-index: 1;
+          }
+
+          .logo-area .bank-name {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--bank-blue);
+            letter-spacing: -1.5px;
+            line-height: 1;
+          }
+
+          .logo-area .bank-tagline {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--bank-gold);
+            font-weight: 700;
+            margin-top: 5px;
+          }
+
+          .verify-qr {
+            text-align: right;
+          }
+
+          .verify-qr img {
+            width: 80px;
+            height: 80px;
+            border: 1px solid #eee;
+            padding: 5px;
+          }
+
+          .verify-qr p {
+            font-size: 8px;
+            color: #888;
+            margin: 5px 0 0 0;
+          }
+
+          .statement-header {
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+          }
+
+          .statement-header h1 {
+            font-size: 22px;
+            margin: 0;
+            color: var(--bank-blue);
+            text-transform: uppercase;
+            letter-spacing: 4px;
+          }
+
+          .statement-header p {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin: 5px 0;
+          }
+
+          .details-grid {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+            font-size: 13px;
+            position: relative;
+            z-index: 1;
+          }
+
+          .section-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--bank-blue);
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--bank-blue);
+            padding-bottom: 5px;
+            margin-bottom: 15px;
+          }
+
+          .info-card {
+            background: #fff;
+            line-height: 1.8;
+          }
+
+          .summary-strip {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1px;
+            background: var(--bank-blue);
+            border: 1px solid var(--bank-blue);
+            margin-bottom: 40px;
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+            z-index: 1;
+          }
+
+          .summary-item {
+            background: white;
+            padding: 15px;
+            text-align: center;
+          }
+
+          .summary-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+            font-weight: 600;
+          }
+
+          .summary-value {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--bank-blue);
+          }
+
+          .txn-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+            position: relative;
+            z-index: 1;
+          }
+
+          .txn-table th {
+            background: #f8f9fa;
+            color: var(--bank-blue);
+            padding: 12px 8px;
+            text-align: left;
+            border-bottom: 2px solid var(--bank-blue);
+            font-weight: 700;
+            text-transform: uppercase;
+          }
+
+          .txn-table td {
+            padding: 12px 8px;
+            border-bottom: 1px solid #eee;
+            vertical-align: top;
+          }
+
           .txn-table tr:nth-child(even) { background: #fafafa; }
+
+          .mono { font-family: 'JetBrains Mono', monospace; font-size: 10px; }
           
-          .amount-pos { color: #28a745; font-weight: 600; }
-          .amount-neg { color: #dc3545; font-weight: 600; }
-          
-          .footer { margin-top: 50px; font-size: 10px; color: #999; text-align: center; border-top: 1px solid #eee; padding-top: 20px; }
+          .amt-cr { color: #1e7e34; font-weight: 700; }
+          .amt-dr { color: #bd2130; font-weight: 700; }
+
+          .footer {
+            margin-top: 60px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            font-size: 10px;
+            color: #888;
+            position: relative;
+            z-index: 1;
+          }
+
+          .signature-area {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-top: 40px;
+          }
+
+          .stamp {
+            border: 2px double #003366;
+            color: #003366;
+            padding: 5px 15px;
+            font-weight: 900;
+            transform: rotate(-10deg);
+            opacity: 0.6;
+            font-size: 14px;
+            text-transform: uppercase;
+            display: inline-block;
+          }
+
           @media print {
-            body { padding: 0; }
+            body { background: white; padding: 0; margin: 0; }
+            .page { margin: 0; box-shadow: none; width: 100%; }
             .no-print { display: none; }
           }
         </style>
       </head>
       <body>
-        <div class="no-print" style="margin-bottom: 20px; text-align: right;">
-          <button onclick="window.print()" style="padding: 10px 20px; background: #0052cc; color: white; border: none; border-radius: 5px; cursor: pointer;">🖨️ Print / Save as PDF</button>
+        <div class="no-print" style="position: fixed; top: 20px; right: 20px; z-index: 1000;">
+          <button onclick="window.print()" style="padding: 12px 24px; background: #003366; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">🖨️ Print Statement / Save PDF</button>
         </div>
 
-        <div class="header">
-          <div class="logo">NOVA CREDIT</div>
-          <div class="bank-info">
-            <strong>Nova Credit Financial Services Ltd.</strong><br>
-            Level 12, Cyber Tower, Sector 44<br>
-            Gurugram, Haryana - 122003<br>
-            Support: support@novacredit.com | 1800-200-NOVA
+        <div class="page">
+          <div class="header">
+            <div class="logo-area">
+              <div class="bank-name">NOVA CREDIT</div>
+              <div class="bank-tagline">Premium Financial Excellence</div>
+              <div style="font-size: 11px; margin-top: 15px; color: var(--text-muted);">
+                <strong>Nova Credit Financial Services Ltd.</strong><br>
+                Corporate Office: Level 12, Cyber Tower, Sector 44<br>
+                Gurugram, HR - 122003, India
+              </div>
+            </div>
+            <div class="verify-qr">
+              <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=VERIFIED-STMT-${user.id}-${Date.now()}" alt="Verify">
+              <p>Scan to Verify Authenticity</p>
+            </div>
           </div>
-        </div>
 
-        <div class="statement-title">Account Statement</div>
+          <div class="statement-header">
+            <h1>Detailed Account Statement</h1>
+            <p>For the period <strong>${formatDate(fromDate)}</strong> to <strong>${formatDate(toDate)}</strong></p>
+            <p>Generated on ${formatDate(new Date())} at ${new Date().toLocaleTimeString()}</p>
+          </div>
 
-        <div class="info-grid">
-          <div class="info-section">
-            <h4>Customer Details</h4>
-            <div class="info-box">
+          <div class="details-grid">
+            <div class="info-card">
+              <div class="section-title">Customer Information</div>
               <strong>${user.fullName}</strong><br>
-              Phone: ${user.phone}<br>
+              Phone: +91 ${user.phone}<br>
               Email: ${user.email}<br>
-              Account ID: NC-${user.id.toString().padStart(6, '0')}
+              <div style="margin-top: 10px; color: var(--text-muted);">
+                Branch: GURUGRAM MAIN BRANCH<br>
+                IFSC: NVCR0001042<br>
+                MICR: 110024002
+              </div>
+            </div>
+            <div class="info-card">
+              <div class="section-title">Account Details</div>
+              Customer ID: <span class="mono">${user.id.toString().padStart(8, '0')}</span><br>
+              Account No: <span class="mono">30990422${user.id.toString().padStart(4, '0')}</span><br>
+              Account Type: PERSONAL CREDIT LINE<br>
+              Currency: INDIAN RUPEE (INR)
             </div>
           </div>
-          <div class="info-section">
-            <h4>Statement Summary</h4>
-            <div class="info-box">
-              Period: ${formatDate(fromDate)} to ${formatDate(toDate)}<br>
-              Currency: INR (₹)<br>
-              Statement Date: ${formatDate(new Date())}
+
+          <div class="summary-strip">
+            <div class="summary-item">
+              <div class="summary-label">Opening Balance</div>
+              <div class="summary-value">₹${openingBalance.toLocaleString('en-IN')}</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-label">Total Credits</div>
+              <div class="summary-value" style="color: #1e7e34;">+₹${totalCredits.toLocaleString('en-IN')}</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-label">Total Debits</div>
+              <div class="summary-value" style="color: #bd2130;">-₹${totalDebits.toLocaleString('en-IN')}</div>
+            </div>
+            <div class="summary-item">
+              <div class="summary-label">Closing Balance</div>
+              <div class="summary-value">₹${closingBalance.toLocaleString('en-IN')}</div>
             </div>
           </div>
-        </div>
 
-        <table class="summary-table">
-          <tr>
-            <th>Opening Balance</th>
-            <th>Total Credits (+)</th>
-            <th>Total Debits (-)</th>
-            <th>Closing Balance</th>
-          </tr>
-          <tr>
-            <td>₹${openingBalance.toLocaleString('en-IN')}</td>
-            <td style="color: #28a745;">+₹${totalCredits.toLocaleString('en-IN')}</td>
-            <td style="color: #dc3545;">-₹${totalDebits.toLocaleString('en-IN')}</td>
-            <td style="font-weight: 700;">₹${closingBalance.toLocaleString('en-IN')}</td>
-          </tr>
-        </table>
-
-        <h4>Transaction Details</h4>
-        <table class="txn-table">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Transaction ID</th>
-              <th>Description</th>
-              <th>Type</th>
-              <th style="text-align: right;">Amount</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${filtered.map(t => `
+          <div class="section-title">Transaction Ledger</div>
+          <table class="txn-table">
+            <thead>
               <tr>
-                <td>${formatDate(t.transaction_date)}</td>
-                <td>#TXN-${t.id.toString().padStart(8, '0')}</td>
-                <td>${t.description}</td>
-                <td><span style="text-transform: uppercase; font-size: 10px;">${t.transaction_type.replace('_', ' ')}</span></td>
-                <td style="text-align: right;" class="${['payment', 'credit'].includes(t.transaction_type) ? 'amount-pos' : 'amount-neg'}">
-                  ${['payment', 'credit'].includes(t.transaction_type) ? '+' : '-'}₹${parseFloat(t.amount).toLocaleString('en-IN')}
-                </td>
+                <th width="12%">Date</th>
+                <th width="15%">Ref Number</th>
+                <th width="43%">Description / Remarks</th>
+                <th width="15%" style="text-align: right;">Debit (DR)</th>
+                <th width="15%" style="text-align: right;">Credit (CR)</th>
               </tr>
-            `).join('')}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              ${filtered.map(t => {
+                const isCredit = ['payment', 'credit'].includes(t.transaction_type);
+                return `
+                  <tr>
+                    <td class="mono">${formatDate(t.transaction_date)}</td>
+                    <td class="mono">NC-${t.id.toString().padStart(8, '0')}</td>
+                    <td>
+                      <strong style="text-transform: uppercase; font-size: 10px;">${t.transaction_type.replace('_', ' ')}</strong><br>
+                      <span style="color: #666;">${t.description}</span>
+                    </td>
+                    <td style="text-align: right;" class="amt-dr">
+                      ${!isCredit ? '₹' + parseFloat(t.amount).toLocaleString('en-IN') : ''}
+                    </td>
+                    <td style="text-align: right;" class="amt-cr">
+                      ${isCredit ? '₹' + parseFloat(t.amount).toLocaleString('en-IN') : ''}
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
 
-        <div class="footer">
-          <p>Important: This is a computer generated document and does not require a physical signature. Nova Credit Financial Services Ltd is a registered NBFC with RBI. Please report any discrepancies within 15 days.</p>
-          <p>© 2026 Nova Credit. All Rights Reserved.</p>
+          <div class="signature-area">
+            <div>
+              <div class="stamp">DIGITALLY VERIFIED</div>
+              <p style="font-size: 9px; color: #888; margin-top: 10px;">System Generated Statement - No physical signature required</p>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-weight: 700; color: var(--bank-blue); border-top: 1px solid #333; display: inline-block; padding-top: 5px; min-width: 150px;">Authorised Signatory</div>
+              <p style="font-size: 9px; color: #888;">For Nova Credit Financial Services Ltd.</p>
+            </div>
+          </div>
+
+          <div class="footer">
+            <p><strong>Note:</strong> This is a computer-generated statement and does not require a physical signature. If you find any discrepancies, please inform the bank within 15 days of the generation date. <strong>Registered Office:</strong> Level 12, Cyber Tower, Gurugram. <strong>CIN:</strong> L65922DL1994PLC058964. <strong>RBI Registration:</strong> B-14.00422.</p>
+            <p style="text-align: center; margin-top: 20px;">End of Statement</p>
+          </div>
         </div>
       </body>
       </html>
