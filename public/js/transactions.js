@@ -272,264 +272,182 @@ async function generateBankStatement() {
     const userIdStr = (user.id || '').toString();
     const accountSuffix = userIdStr.replace(/[^0-9]/g, '').slice(-4).padStart(4, '7');
     const accountNumber = `30990422${accountSuffix}`;
+    const password = (user.username || 'NOVA').slice(0, 4);
 
-    // Generate Statement HTML
-    const html = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Account Statement - ${user.fullName}</title>
-        <style>
-          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
-          
-          :root {
-            --bank-blue: #003366;
-            --bank-gold: #b38b00;
-            --text-main: #1a1a1a;
-            --text-muted: #4a4a4a;
-            --border-light: #e0e0e0;
-          }
+    // Create PDF using jsPDF
+    // Note: We'll use a hidden element to render the HTML then capture it, or build it manually for better control
+    // For a "Genuine" look, building it manually with jsPDF is better for password protection support
+    
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({
+      orientation: 'p',
+      unit: 'mm',
+      format: 'a4',
+      encryption: {
+        userPassword: password,
+        ownerPassword: 'NOVA_ADMIN_SECURE',
+        userPermissions: ['print', 'copy']
+      }
+    });
 
-          body { 
-            font-family: 'Inter', sans-serif; 
-            color: var(--text-main); 
-            padding: 0; 
-            margin: 0;
-            background: #f0f2f5;
-          }
+    // Add Fonts & Styles
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0, 51, 102); // Bank Blue
+    doc.setFontSize(24);
+    doc.text('NOVA CREDIT', 20, 25);
+    
+    doc.setFontSize(8);
+    doc.setTextColor(179, 139, 0); // Bank Gold
+    doc.text('PREMIUM FINANCIAL EXCELLENCE', 20, 30);
 
-          .page {
-            width: 210mm;
-            min-height: 297mm;
-            padding: 20mm;
-            margin: 10mm auto;
-            background: white;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            position: relative;
-            overflow: hidden;
-          }
+    doc.setFontSize(9);
+    doc.setTextColor(100, 100, 100);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Nova Credit Financial Services Ltd.', 20, 38);
+    doc.text('Level 12, Cyber Tower, Gurugram, HR', 20, 42);
 
-          .page::before {
-            content: "NOVA CREDIT OFFICIAL";
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) rotate(-45deg);
-            font-size: 80px;
-            font-weight: 900;
-            color: rgba(0, 51, 102, 0.03);
-            white-space: nowrap;
-            pointer-events: none;
-            z-index: 0;
-          }
+    // Right Side: Verification info
+    doc.setFontSize(7);
+    doc.text('STATEMENT AUTHENTICITY VERIFIED', 140, 25);
+    doc.text(`ID: STMT-${userIdStr}`, 140, 29);
+    doc.text(`DATE: ${formatDate(new Date())}`, 140, 33);
 
-          .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            border-bottom: 3px solid var(--bank-blue);
-            padding-bottom: 20px;
-            margin-bottom: 30px;
-            position: relative;
-            z-index: 1;
-          }
+    // Title
+    doc.setDrawColor(0, 51, 102);
+    doc.setLineWidth(0.5);
+    doc.line(20, 50, 190, 50);
 
-          .logo-area .bank-name {
-            font-size: 28px;
-            font-weight: 800;
-            color: var(--bank-blue);
-            letter-spacing: -1.5px;
-            line-height: 1;
-          }
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('DETAILED ACCOUNT STATEMENT', 105, 65, { align: 'center' });
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Period: ${formatDate(fromDate)} to ${formatDate(toDate)}`, 105, 72, { align: 'center' });
 
-          .logo-area .bank-tagline {
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: var(--bank-gold);
-            font-weight: 700;
-            margin-top: 5px;
-          }
+    // Info Grid
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text('CUSTOMER INFORMATION', 20, 85);
+    doc.line(20, 87, 80, 87);
+    
+    doc.setFont('helvetica', 'normal');
+    doc.text(user.fullName, 20, 93);
+    doc.text(`Phone: +91 ${user.phone}`, 20, 98);
+    doc.text(`Email: ${user.email}`, 20, 103);
+    doc.text('Branch: GURUGRAM MAIN', 20, 108);
 
-          .verify-qr { text-align: right; }
-          .verify-qr img { width: 80px; height: 80px; border: 1px solid #eee; padding: 5px; }
-          .verify-qr p { font-size: 8px; color: #888; margin: 5px 0 0 0; }
+    doc.setFont('helvetica', 'bold');
+    doc.text('ACCOUNT DETAILS', 110, 85);
+    doc.line(110, 87, 170, 87);
+    
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Account No: ${accountNumber}`, 110, 93);
+    doc.text(`Customer ID: ${userIdStr}`, 110, 98);
+    doc.text('Type: PERSONAL CREDIT LINE', 110, 103);
+    doc.text('IFSC: NVCR0001042', 110, 108);
 
-          .statement-header { text-align: center; margin-bottom: 40px; position: relative; }
-          .statement-header h1 { font-size: 22px; margin: 0; color: var(--bank-blue); text-transform: uppercase; letter-spacing: 4px; }
-          .statement-header p { font-size: 12px; color: var(--text-muted); margin: 5px 0; }
+    // Summary Strip
+    doc.setFillColor(245, 247, 250);
+    doc.rect(20, 120, 170, 25, 'F');
+    doc.setDrawColor(220, 220, 220);
+    doc.rect(20, 120, 170, 25, 'S');
 
-          .details-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 30px; margin-bottom: 40px; font-size: 13px; position: relative; z-index: 1; }
-          .section-title { font-size: 11px; font-weight: 700; color: var(--bank-blue); text-transform: uppercase; border-bottom: 1px solid var(--bank-blue); padding-bottom: 5px; margin-bottom: 15px; }
-          .info-card { background: #fff; line-height: 1.8; }
+    doc.setFontSize(8);
+    doc.text('OPENING BALANCE', 35, 128, { align: 'center' });
+    doc.text('TOTAL CREDITS', 75, 128, { align: 'center' });
+    doc.text('TOTAL DEBITS', 115, 128, { align: 'center' });
+    doc.text('CLOSING BALANCE', 155, 128, { align: 'center' });
 
-          .summary-strip {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 1px;
-            background: var(--bank-blue);
-            border: 1px solid var(--bank-blue);
-            margin-bottom: 40px;
-            border-radius: 4px;
-            overflow: hidden;
-            position: relative;
-            z-index: 1;
-          }
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`₹${openingBalance.toLocaleString('en-IN')}`, 35, 137, { align: 'center' });
+    doc.setTextColor(30, 126, 52);
+    doc.text(`+₹${totalCredits.toLocaleString('en-IN')}`, 75, 137, { align: 'center' });
+    doc.setTextColor(189, 33, 48);
+    doc.text(`-₹${totalDebits.toLocaleString('en-IN')}`, 115, 137, { align: 'center' });
+    doc.setTextColor(0, 51, 102);
+    doc.text(`₹${closingBalance.toLocaleString('en-IN')}`, 155, 137, { align: 'center' });
 
-          .summary-item { background: white; padding: 15px; text-align: center; }
-          .summary-label { font-size: 10px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 5px; font-weight: 600; }
-          .summary-value { font-size: 15px; font-weight: 700; color: var(--bank-blue); }
+    // Table Header
+    doc.setTextColor(0, 51, 102);
+    doc.setFontSize(10);
+    doc.text('TRANSACTION LEDGER', 20, 158);
+    
+    let y = 165;
+    doc.setFillColor(0, 51, 102);
+    doc.rect(20, y, 170, 8, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(8);
+    doc.text('DATE', 25, y + 5);
+    doc.text('DESCRIPTION', 55, y + 5);
+    doc.text('DEBIT (DR)', 135, y + 5);
+    doc.text('CREDIT (CR)', 165, y + 5);
 
-          .txn-table { width: 100%; border-collapse: collapse; font-size: 11px; position: relative; z-index: 1; }
-          .txn-table th { background: #f8f9fa; color: var(--bank-blue); padding: 12px 8px; text-align: left; border-bottom: 2px solid var(--bank-blue); font-weight: 700; text-transform: uppercase; }
-          .txn-table td { padding: 12px 8px; border-bottom: 1px solid #eee; vertical-align: top; }
-          .txn-table tr:nth-child(even) { background: #fafafa; }
+    y += 8;
+    doc.setTextColor(0, 0, 0);
+    doc.setFont('helvetica', 'normal');
 
-          .mono { font-family: 'JetBrains Mono', monospace; font-size: 10px; }
-          .amt-cr { color: #1e7e34; font-weight: 700; }
-          .amt-dr { color: #bd2130; font-weight: 700; }
+    filtered.forEach((t, i) => {
+      if (y > 260) {
+        doc.addPage();
+        y = 20;
+      }
+      
+      const isCr = ['payment', 'credit'].includes(t.transaction_type);
+      const amt = parseFloat(t.amount || 0).toLocaleString('en-IN');
+      
+      doc.setFontSize(7);
+      doc.text(formatDate(t.transaction_date), 25, y + 6);
+      
+      doc.setFont('helvetica', 'bold');
+      doc.text(t.transaction_type.replace('_', ' ').toUpperCase(), 55, y + 5);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(6);
+      doc.text(t.description || '', 55, y + 8);
+      
+      doc.setFontSize(8);
+      if (isCr) {
+        doc.text(`₹${amt}`, 165, y + 6);
+      } else {
+        doc.text(`₹${amt}`, 135, y + 6);
+      }
+      
+      doc.setDrawColor(240, 240, 240);
+      doc.line(20, y + 10, 190, y + 10);
+      y += 10;
+    });
 
-          .footer { margin-top: 60px; padding-top: 20px; border-top: 1px solid #eee; font-size: 10px; color: #888; position: relative; z-index: 1; }
-          .signature-area { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 40px; }
-          .stamp { border: 2px double #003366; color: #003366; padding: 5px 15px; font-weight: 900; transform: rotate(-10deg); opacity: 0.6; font-size: 14px; text-transform: uppercase; display: inline-block; }
+    // Signature Area
+    if (y > 240) { doc.addPage(); y = 20; }
+    y += 20;
+    doc.setDrawColor(0, 51, 102);
+    doc.rect(20, y, 40, 10);
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.text('DIGITALLY VERIFIED', 23, y + 7);
+    
+    doc.text('Authorised Signatory', 140, y + 7);
+    doc.line(140, y + 8, 180, y + 8);
+    doc.setFontSize(6);
+    doc.setFont('helvetica', 'normal');
+    doc.text('For Nova Credit Financial Services Ltd.', 140, y + 12);
 
-          @media print {
-            body { background: white; padding: 0; margin: 0; }
-            .page { margin: 0; box-shadow: none; width: 100%; }
-            .no-print { display: none; }
-          }
-        </style>
-      </head>
-      <body>
-        <div class="no-print" style="position: fixed; top: 20px; right: 20px; z-index: 1000;">
-          <button onclick="window.print()" style="padding: 12px 24px; background: #003366; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">🖨️ Print Statement / Save PDF</button>
-        </div>
+    // Footer
+    doc.setFontSize(6);
+    doc.setTextColor(150, 150, 150);
+    const footerText = 'Note: This is a password protected document. Use first 4 characters of your username to open. This is a computer generated statement and does not require a physical signature. Registered Office: Level 12, Cyber Tower, Gurugram. CIN: L65922DL1994PLC058964.';
+    doc.text(footerText, 20, 285);
 
-        <div class="page">
-          <div class="header">
-            <div class="logo-area">
-              <div class="bank-name">NOVA CREDIT</div>
-              <div class="bank-tagline">Premium Financial Excellence</div>
-              <div style="font-size: 11px; margin-top: 15px; color: var(--text-muted);">
-                <strong>Nova Credit Financial Services Ltd.</strong><br>
-                Corporate Office: Level 12, Cyber Tower, Sector 44<br>
-                Gurugram, HR - 122003, India
-              </div>
-            </div>
-            <div class="verify-qr">
-              <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=VERIFIED-STMT-${userIdStr}-${Date.now()}" alt="Verify">
-              <p>Scan to Verify Authenticity</p>
-            </div>
-          </div>
+    // Save and Download
+    doc.save(`Nova_Statement_${userIdStr}_${new Date().toISOString().split('T')[0]}.pdf`);
+    showToast('Statement downloaded successfully (Password: First 4 chars of username)', 'success');
 
-          <div class="statement-header">
-            <h1>Detailed Account Statement</h1>
-            <p>For the period <strong>${formatDate(fromDate)}</strong> to <strong>${formatDate(toDate)}</strong></p>
-            <p>Generated on ${formatDate(new Date())} at ${new Date().toLocaleTimeString()}</p>
-          </div>
-
-          <div class="details-grid">
-            <div class="info-card">
-              <div class="section-title">Customer Information</div>
-              <strong>${user.fullName}</strong><br>
-              Phone: +91 ${user.phone}<br>
-              Email: ${user.email}<br>
-              <div style="margin-top: 10px; color: var(--text-muted);">
-                Branch: GURUGRAM MAIN BRANCH<br>
-                IFSC: NVCR0001042<br>
-                MICR: 110024002
-              </div>
-            </div>
-            <div class="info-card">
-              <div class="section-title">Account Details</div>
-              Customer ID: <span class="mono">${userIdStr}</span><br>
-              Account No: <span class="mono">${accountNumber}</span><br>
-              Account Type: PERSONAL CREDIT LINE<br>
-              Currency: INDIAN RUPEE (INR)
-            </div>
-          </div>
-
-          <div class="summary-strip">
-            <div class="summary-item">
-              <div class="summary-label">Opening Balance</div>
-              <div class="summary-value">₹${openingBalance.toLocaleString('en-IN')}</div>
-            </div>
-            <div class="summary-item">
-              <div class="summary-label">Total Credits</div>
-              <div class="summary-value" style="color: #1e7e34;">+₹${totalCredits.toLocaleString('en-IN')}</div>
-            </div>
-            <div class="summary-item">
-              <div class="summary-label">Total Debits</div>
-              <div class="summary-value" style="color: #bd2130;">-₹${totalDebits.toLocaleString('en-IN')}</div>
-            </div>
-            <div class="summary-item">
-              <div class="summary-label">Closing Balance</div>
-              <div class="summary-value">₹${closingBalance.toLocaleString('en-IN')}</div>
-            </div>
-          </div>
-
-          <div class="section-title">Transaction Ledger</div>
-          <table class="txn-table">
-            <thead>
-              <tr>
-                <th width="12%">Date</th>
-                <th width="15%">Ref Number</th>
-                <th width="43%">Description / Remarks</th>
-                <th width="15%" style="text-align: right;">Debit (DR)</th>
-                <th width="15%" style="text-align: right;">Credit (CR)</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${filtered.map(t => {
-                const isCr = ['payment', 'credit'].includes(t.transaction_type);
-                return `
-                  <tr>
-                    <td class="mono">${formatDate(t.transaction_date)}</td>
-                    <td class="mono">NC-${(t.id || 0).toString().padStart(8, '0')}</td>
-                    <td>
-                      <strong style="text-transform: uppercase; font-size: 10px;">${(t.transaction_type || '').replace('_', ' ')}</strong><br>
-                      <span style="color: #666;">${t.description || ''}</span>
-                    </td>
-                    <td style="text-align: right;" class="amt-dr">
-                      ${!isCr ? '₹' + parseFloat(t.amount || 0).toLocaleString('en-IN') : ''}
-                    </td>
-                    <td style="text-align: right;" class="amt-cr">
-                      ${isCr ? '₹' + parseFloat(t.amount || 0).toLocaleString('en-IN') : ''}
-                    </td>
-                  </tr>
-                `;
-              }).join('')}
-            </tbody>
-          </table>
-
-          <div class="signature-area">
-            <div>
-              <div class="stamp">DIGITALLY VERIFIED</div>
-              <p style="font-size: 9px; color: #888; margin-top: 10px;">System Generated Statement - No physical signature required</p>
-            </div>
-            <div style="text-align: right;">
-              <div style="font-weight: 700; color: var(--bank-blue); border-top: 1px solid #333; display: inline-block; padding-top: 5px; min-width: 150px;">Authorised Signatory</div>
-              <p style="font-size: 9px; color: #888;">For Nova Credit Financial Services Ltd.</p>
-            </div>
-          </div>
-
-          <div class="footer">
-            <p><strong>Note:</strong> This is a computer-generated statement and does not require a physical signature. If you find any discrepancies, please inform the bank within 15 days. <strong>Registered Office:</strong> Level 12, Cyber Tower, Gurugram. <strong>CIN:</strong> L65922DL1994PLC058964.</p>
-            <p style="text-align: center; margin-top: 20px;">End of Statement</p>
-          </div>
-        </div>
-      </body>
-      </html>
-    `;
-
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(html);
-      printWindow.document.close();
-    } else {
-      showToast('Popup blocked! Please allow popups for this site.', 'danger');
-    }
-
+  } catch (error) {
+    console.error('PDF Error:', error);
+    showToast('Failed to generate PDF: ' + error.message, 'danger');
+  }
+}
   } catch (error) {
     showToast('Failed to generate statement: ' + error.message, 'danger');
   }
