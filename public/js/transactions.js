@@ -269,8 +269,11 @@ async function generateBankStatement() {
     const closingBalance = filtered[filtered.length - 1].balance_after || 0;
     const openingBalance = (filtered[0].balance_after || 0) - (['payment', 'credit'].includes(filtered[0].transaction_type) ? parseFloat(filtered[0].amount) : -parseFloat(filtered[0].amount));
 
+    const userIdStr = (user.id || '').toString();
+    const accountSuffix = userIdStr.replace(/[^0-9]/g, '').slice(-4).padStart(4, '7');
+    const accountNumber = `30990422${accountSuffix}`;
+
     // Generate Statement HTML
-    const printWindow = window.open('', '_blank');
     const html = `
       <!DOCTYPE html>
       <html>
@@ -306,7 +309,6 @@ async function generateBankStatement() {
             overflow: hidden;
           }
 
-          /* Watermark */
           .page::before {
             content: "NOVA CREDIT OFFICIAL";
             position: absolute;
@@ -349,67 +351,17 @@ async function generateBankStatement() {
             margin-top: 5px;
           }
 
-          .verify-qr {
-            text-align: right;
-          }
+          .verify-qr { text-align: right; }
+          .verify-qr img { width: 80px; height: 80px; border: 1px solid #eee; padding: 5px; }
+          .verify-qr p { font-size: 8px; color: #888; margin: 5px 0 0 0; }
 
-          .verify-qr img {
-            width: 80px;
-            height: 80px;
-            border: 1px solid #eee;
-            padding: 5px;
-          }
+          .statement-header { text-align: center; margin-bottom: 40px; position: relative; }
+          .statement-header h1 { font-size: 22px; margin: 0; color: var(--bank-blue); text-transform: uppercase; letter-spacing: 4px; }
+          .statement-header p { font-size: 12px; color: var(--text-muted); margin: 5px 0; }
 
-          .verify-qr p {
-            font-size: 8px;
-            color: #888;
-            margin: 5px 0 0 0;
-          }
-
-          .statement-header {
-            text-align: center;
-            margin-bottom: 40px;
-            position: relative;
-          }
-
-          .statement-header h1 {
-            font-size: 22px;
-            margin: 0;
-            color: var(--bank-blue);
-            text-transform: uppercase;
-            letter-spacing: 4px;
-          }
-
-          .statement-header p {
-            font-size: 12px;
-            color: var(--text-muted);
-            margin: 5px 0;
-          }
-
-          .details-grid {
-            display: grid;
-            grid-template-columns: 1.5fr 1fr;
-            gap: 30px;
-            margin-bottom: 40px;
-            font-size: 13px;
-            position: relative;
-            z-index: 1;
-          }
-
-          .section-title {
-            font-size: 11px;
-            font-weight: 700;
-            color: var(--bank-blue);
-            text-transform: uppercase;
-            border-bottom: 1px solid var(--bank-blue);
-            padding-bottom: 5px;
-            margin-bottom: 15px;
-          }
-
-          .info-card {
-            background: #fff;
-            line-height: 1.8;
-          }
+          .details-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 30px; margin-bottom: 40px; font-size: 13px; position: relative; z-index: 1; }
+          .section-title { font-size: 11px; font-weight: 700; color: var(--bank-blue); text-transform: uppercase; border-bottom: 1px solid var(--bank-blue); padding-bottom: 5px; margin-bottom: 15px; }
+          .info-card { background: #fff; line-height: 1.8; }
 
           .summary-strip {
             display: grid;
@@ -424,85 +376,22 @@ async function generateBankStatement() {
             z-index: 1;
           }
 
-          .summary-item {
-            background: white;
-            padding: 15px;
-            text-align: center;
-          }
+          .summary-item { background: white; padding: 15px; text-align: center; }
+          .summary-label { font-size: 10px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 5px; font-weight: 600; }
+          .summary-value { font-size: 15px; font-weight: 700; color: var(--bank-blue); }
 
-          .summary-label {
-            font-size: 10px;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            margin-bottom: 5px;
-            font-weight: 600;
-          }
-
-          .summary-value {
-            font-size: 15px;
-            font-weight: 700;
-            color: var(--bank-blue);
-          }
-
-          .txn-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 11px;
-            position: relative;
-            z-index: 1;
-          }
-
-          .txn-table th {
-            background: #f8f9fa;
-            color: var(--bank-blue);
-            padding: 12px 8px;
-            text-align: left;
-            border-bottom: 2px solid var(--bank-blue);
-            font-weight: 700;
-            text-transform: uppercase;
-          }
-
-          .txn-table td {
-            padding: 12px 8px;
-            border-bottom: 1px solid #eee;
-            vertical-align: top;
-          }
-
+          .txn-table { width: 100%; border-collapse: collapse; font-size: 11px; position: relative; z-index: 1; }
+          .txn-table th { background: #f8f9fa; color: var(--bank-blue); padding: 12px 8px; text-align: left; border-bottom: 2px solid var(--bank-blue); font-weight: 700; text-transform: uppercase; }
+          .txn-table td { padding: 12px 8px; border-bottom: 1px solid #eee; vertical-align: top; }
           .txn-table tr:nth-child(even) { background: #fafafa; }
 
           .mono { font-family: 'JetBrains Mono', monospace; font-size: 10px; }
-          
           .amt-cr { color: #1e7e34; font-weight: 700; }
           .amt-dr { color: #bd2130; font-weight: 700; }
 
-          .footer {
-            margin-top: 60px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
-            font-size: 10px;
-            color: #888;
-            position: relative;
-            z-index: 1;
-          }
-
-          .signature-area {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            margin-top: 40px;
-          }
-
-          .stamp {
-            border: 2px double #003366;
-            color: #003366;
-            padding: 5px 15px;
-            font-weight: 900;
-            transform: rotate(-10deg);
-            opacity: 0.6;
-            font-size: 14px;
-            text-transform: uppercase;
-            display: inline-block;
-          }
+          .footer { margin-top: 60px; padding-top: 20px; border-top: 1px solid #eee; font-size: 10px; color: #888; position: relative; z-index: 1; }
+          .signature-area { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 40px; }
+          .stamp { border: 2px double #003366; color: #003366; padding: 5px 15px; font-weight: 900; transform: rotate(-10deg); opacity: 0.6; font-size: 14px; text-transform: uppercase; display: inline-block; }
 
           @media print {
             body { background: white; padding: 0; margin: 0; }
@@ -528,7 +417,7 @@ async function generateBankStatement() {
               </div>
             </div>
             <div class="verify-qr">
-              <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=VERIFIED-STMT-${user.id}-${Date.now()}" alt="Verify">
+              <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=VERIFIED-STMT-${userIdStr}-${Date.now()}" alt="Verify">
               <p>Scan to Verify Authenticity</p>
             </div>
           </div>
@@ -553,8 +442,8 @@ async function generateBankStatement() {
             </div>
             <div class="info-card">
               <div class="section-title">Account Details</div>
-              Customer ID: <span class="mono">${user.id}</span><br>
-              Account No: <span class="mono">30990422${user.id.replace(/[^0-9]/g, '').slice(-4).padStart(4, '7')}</span><br>
+              Customer ID: <span class="mono">${userIdStr}</span><br>
+              Account No: <span class="mono">${accountNumber}</span><br>
               Account Type: PERSONAL CREDIT LINE<br>
               Currency: INDIAN RUPEE (INR)
             </div>
@@ -592,20 +481,20 @@ async function generateBankStatement() {
             </thead>
             <tbody>
               ${filtered.map(t => {
-                const isCredit = ['payment', 'credit'].includes(t.transaction_type);
+                const isCr = ['payment', 'credit'].includes(t.transaction_type);
                 return `
                   <tr>
                     <td class="mono">${formatDate(t.transaction_date)}</td>
-                    <td class="mono">NC-${t.id.toString().padStart(8, '0')}</td>
+                    <td class="mono">NC-${(t.id || 0).toString().padStart(8, '0')}</td>
                     <td>
-                      <strong style="text-transform: uppercase; font-size: 10px;">${t.transaction_type.replace('_', ' ')}</strong><br>
-                      <span style="color: #666;">${t.description}</span>
+                      <strong style="text-transform: uppercase; font-size: 10px;">${(t.transaction_type || '').replace('_', ' ')}</strong><br>
+                      <span style="color: #666;">${t.description || ''}</span>
                     </td>
                     <td style="text-align: right;" class="amt-dr">
-                      ${!isCredit ? '₹' + parseFloat(t.amount).toLocaleString('en-IN') : ''}
+                      ${!isCr ? '₹' + parseFloat(t.amount || 0).toLocaleString('en-IN') : ''}
                     </td>
                     <td style="text-align: right;" class="amt-cr">
-                      ${isCredit ? '₹' + parseFloat(t.amount).toLocaleString('en-IN') : ''}
+                      ${isCr ? '₹' + parseFloat(t.amount || 0).toLocaleString('en-IN') : ''}
                     </td>
                   </tr>
                 `;
@@ -625,7 +514,7 @@ async function generateBankStatement() {
           </div>
 
           <div class="footer">
-            <p><strong>Note:</strong> This is a computer-generated statement and does not require a physical signature. If you find any discrepancies, please inform the bank within 15 days of the generation date. <strong>Registered Office:</strong> Level 12, Cyber Tower, Gurugram. <strong>CIN:</strong> L65922DL1994PLC058964. <strong>RBI Registration:</strong> B-14.00422.</p>
+            <p><strong>Note:</strong> This is a computer-generated statement and does not require a physical signature. If you find any discrepancies, please inform the bank within 15 days. <strong>Registered Office:</strong> Level 12, Cyber Tower, Gurugram. <strong>CIN:</strong> L65922DL1994PLC058964.</p>
             <p style="text-align: center; margin-top: 20px;">End of Statement</p>
           </div>
         </div>
@@ -633,8 +522,13 @@ async function generateBankStatement() {
       </html>
     `;
 
-    printWindow.document.write(html);
-    printWindow.document.close();
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(html);
+      printWindow.document.close();
+    } else {
+      showToast('Popup blocked! Please allow popups for this site.', 'danger');
+    }
 
   } catch (error) {
     showToast('Failed to generate statement: ' + error.message, 'danger');
