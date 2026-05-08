@@ -448,7 +448,3 @@ async function generateBankStatement() {
     showToast('Failed to generate PDF: ' + error.message, 'danger');
   }
 }
-  } catch (error) {
-    showToast('Failed to generate statement: ' + error.message, 'danger');
-  }
-}
