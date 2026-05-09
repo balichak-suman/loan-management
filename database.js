@@ -62,7 +62,7 @@ async function initializeDatabase() {
       credit_limit DECIMAL DEFAULT 100000,
       available_credit DECIMAL DEFAULT 100000,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (user_id) REFERENCES users(id)
+      FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE
     )`,
     `CREATE TABLE IF NOT EXISTS loans (
       id SERIAL PRIMARY KEY,
@@ -83,7 +83,7 @@ async function initializeDatabase() {
       bank_name TEXT,
       account_number TEXT,
       ifsc_code TEXT,
-      FOREIGN KEY (user_id) REFERENCES users(id)
+      FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE
     )`,
     `CREATE TABLE IF NOT EXISTS payments (
       id SERIAL PRIMARY KEY,
@@ -94,8 +94,8 @@ async function initializeDatabase() {
       payment_type TEXT DEFAULT 'loan_payment',
       payment_status TEXT DEFAULT 'completed',
       proof_image TEXT,
-      FOREIGN KEY (user_id) REFERENCES users(id),
-      FOREIGN KEY (loan_id) REFERENCES loans(id)
+      FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE,
+      FOREIGN KEY (loan_id) REFERENCES loans(id) ON DELETE CASCADE
     )`,
     `CREATE TABLE IF NOT EXISTS transactions (
       id SERIAL PRIMARY KEY,
@@ -105,7 +105,7 @@ async function initializeDatabase() {
       description TEXT,
       balance_after DECIMAL,
       transaction_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (user_id) REFERENCES users(id)
+      FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE
     )`,
     `CREATE TABLE IF NOT EXISTS system_parameters (
       id INTEGER PRIMARY KEY,
@@ -126,7 +126,7 @@ async function initializeDatabase() {
       new_values TEXT,
       ip_address TEXT,
       timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (admin_id) REFERENCES users(id)
+      FOREIGN KEY (admin_id) REFERENCES users(id) ON UPDATE CASCADE
     )`
   ];
 
