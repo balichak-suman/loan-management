@@ -985,9 +985,11 @@ function renderTransactionsTable(transactions) {
               <td>#${t.id}</td>
               <td>${t.username || 'Unknown'}</td>
               <td><span class="badge badge-${getTransactionTypeBadge(t.transaction_type)}">${t.transaction_type}</span></td>
-              <td style="font-weight: 600;">${formatCurrency(t.amount)}</td>
+              <td style="font-weight: 700; color: ${['payment', 'credit'].includes(t.transaction_type) ? 'var(--success)' : 'var(--danger)'};">
+                ${['payment', 'credit'].includes(t.transaction_type) ? '+' : '-'}${formatCurrency(t.amount)}
+              </td>
               <td>${t.description || 'N/A'}</td>
-              <td>${new Date(t.transaction_date).toLocaleString()}</td>
+              <td>${formatDate(t.transaction_date)}</td>
               <td>
                 <button class="btn btn-sm btn-primary" onclick='editTransaction(${JSON.stringify(t).replace(/'/g, "&apos;")})'> 
                   ✏️ Edit
@@ -1110,6 +1112,86 @@ async function deleteTransaction(transactionId) {
       }
     }
   ]);
+}
+
+async function showCreateTransactionModal() {
+  // Ensure we have users to select from
+  if (!window.allUsers) {
+    try {
+      const data = await apiCall('/admin/users');
+      window.allUsers = data.users;
+    } catch (error) {
+      showToast('Failed to load users for transaction', 'danger');
+      return;
+    }
+  }
+
+  const content = `
+    <form id="create-transaction-form">
+      <div class="grid grid-2">
+        <div class="form-group" style="grid-column: 1 / -1;">
+          <label class="form-label">Select User</label>
+          <select id="create-trans-user" class="form-select" required>
+            <option value="">-- Select User --</option>
+            ${window.allUsers.map(u => `<option value="${u.id}">${u.full_name} (@${u.username})</option>`).join('')}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Transaction Type</label>
+          <select id="create-trans-type" class="form-select" required>
+            <option value="credit">Credit</option>
+            <option value="debit">Debit</option>
+            <option value="payment">Payment</option>
+            <option value="penalty">Penalty</option>
+            <option value="loan_approval">Loan Approval</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Amount (₹)</label>
+          <input type="number" id="create-trans-amount" class="form-input" placeholder="0.00" min="0" step="0.01" required>
+        </div>
+        
+        <div class="form-group" style="grid-column: 1 / -1;">
+          <label class="form-label">Description</label>
+          <input type="text" id="create-trans-description" class="form-input" placeholder="Reason for transaction" required>
+        </div>
+      </div>
+      <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+        <button type="submit" class="btn btn-primary" style="flex: 1;">Create Transaction</button>
+      </div>
+    </form>
+  `;
+
+  const overlay = createModal('➕ Add Manual Transaction', content);
+
+  document.getElementById('create-transaction-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const userId = document.getElementById('create-trans-user').value;
+    const transactionType = document.getElementById('create-trans-type').value;
+    const amount = parseFloat(document.getElementById('create-trans-amount').value);
+    const description = document.getElementById('create-trans-description').value;
+
+    try {
+      await apiCall('/admin/transactions', {
+        method: 'POST',
+        body: JSON.stringify({
+          userId,
+          transactionType,
+          amount,
+          description
+        })
+      });
+
+      showToast('Transaction created successfully!', 'success');
+      closeModal(overlay);
+      loadAllTransactions(); // Refresh the table
+    } catch (error) {
+      showToast(error.message || 'Failed to create transaction', 'danger');
+    }
+  });
 }
 
 // Export all data

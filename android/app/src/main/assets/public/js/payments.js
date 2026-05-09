@@ -164,16 +164,21 @@ function showPaymentForm(loanId, amount, loanName) {
     <div style="text-align: center;">
       <div style="margin-bottom: 1.5rem;">
         <p style="margin-bottom: 0.5rem; color: var(--text-secondary);">Scan to Pay</p>
-        <div style="background: white; padding: 1rem; display: inline-block; border-radius: 1rem;">
-          <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=novacredit@upi&pn=NovaCredit&am=${amount}&cu=INR" alt="Payment QR" style="width: 150px; height: 150px;">
+        <div style="background: white; padding: 1rem; display: inline-block; border-radius: 1rem; margin-bottom: 1rem;">
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=bobbili.kumar@superyes&pn=Bobbili Kumar&am=${amount}&cu=INR&tn=Nova Credit Repayment Loan #${loanId}&tr=NC${Date.now()}" alt="Payment QR" style="width: 150px; height: 150px;">
         </div>
-        <p style="margin-top: 0.5rem; font-size: 0.9rem;">Amount: ${formatCurrency(amount)}</p>
+        <p style="margin-top: 0.5rem; font-size: 1.1rem; font-weight: 700; color: var(--primary);">Fixed Amount: ${formatCurrency(amount)}</p>
+        
+        <div class="alert alert-danger" style="margin: 1rem 0; font-size: 0.85rem; text-align: left; border-left: 4px solid #dc3545;">
+          <strong>⚠️ STRICT ENFORCEMENT:</strong><br>
+          Do NOT edit the amount in your UPI app. The system will <strong>automatically reject</strong> any payment that does not exactly match ${formatCurrency(amount)}. Partial payments are not allowed.
+        </div>
       </div>
 
       <form id="payment-form">
         <div class="form-group" style="text-align: left;">
           <label class="form-label">Payment Amount (₹)</label>
-          <input type="number" id="payment-amount" class="form-input" value="${amount}" readonly style="background-color: var(--bg-secondary); cursor: not-allowed;">
+          <input type="text" id="payment-amount" class="form-input" value="${amount}" disabled style="background-color: var(--bg-tertiary); cursor: not-allowed; font-weight: 700; color: var(--primary); border: 1px solid var(--primary);">
         </div>
         
         <div class="form-group" style="text-align: left;">

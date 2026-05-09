@@ -1,4 +1,6 @@
 // Authentication Pages
+let registrationData = {};
+
 function renderAuthPage(mode = 'login') {
   const pageContent = document.getElementById('page-content');
   pageContent.classList.add('full-bleed');

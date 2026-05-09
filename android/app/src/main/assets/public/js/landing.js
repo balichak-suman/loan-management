@@ -12,9 +12,15 @@ function showLandingPage() {
 <span class="material-symbols-outlined text-[#72dcff]" data-icon="account_balance_wallet">account_balance_wallet</span>
 <span class="text-xl sm:text-2xl font-bold bg-gradient-to-r from-[#72dcff] to-[#a68cff] bg-clip-text text-transparent font-['Inter'] tracking-tight">Nova Credit</span>
 </div>
+<div class="flex items-center gap-4 sm:gap-6">
+<a href="/downloads/novacredit.apk" class="hidden sm:flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors font-semibold text-sm" download>
+    <span class="material-symbols-outlined text-xl" data-icon="android">android</span>
+    App
+</a>
 <button onclick="showAuthPage()" class="px-4 sm:px-5 py-2 rounded-xl bg-surface-variant/40 text-on-surface text-sm font-medium border border-outline-variant/15 active:scale-95 transition-transform">
             Login
         </button>
+</div>
 </div>
 </nav>
 <div class="pt-16 sm:pt-20">
@@ -34,9 +40,15 @@ function showLandingPage() {
 <button onclick="showAuthPage('register')" class="w-full max-w-xs py-4 rounded-xl bg-gradient-to-r from-primary to-primary-container text-on-primary font-bold text-lg shadow-lg shadow-primary/20 hover:opacity-90 active:scale-95 transition-all">
                         Get Started
                     </button>
-<button onclick="showAuthPage()" class="w-full max-w-xs py-4 rounded-xl bg-surface-variant/40 text-on-surface font-semibold border border-outline-variant/20 active:scale-95 transition-all">
+<div class="flex gap-4 w-full max-w-xs">
+<button onclick="showAuthPage()" class="flex-1 py-4 rounded-xl bg-surface-variant/40 text-on-surface font-semibold border border-outline-variant/20 active:scale-95 transition-all">
                         View Demo
                     </button>
+<a href="/downloads/novacredit.apk" class="flex-1 py-4 rounded-xl bg-secondary/10 text-secondary font-bold border border-secondary/20 flex items-center justify-center gap-2 active:scale-95 transition-all" download>
+                        <span class="material-symbols-outlined text-xl" data-icon="android">android</span>
+                        App
+                    </a>
+</div>
 </div>
 </div>
 <!-- Abstract Hero Asset -->
@@ -146,9 +158,15 @@ function showLandingPage() {
 <section class="px-4 sm:px-6 py-16 sm:py-24 text-center bg-[#0e131e] relative">
 <div class="relative z-10">
 <h2 class="text-2xl sm:text-3xl font-extrabold mb-6 sm:mb-8 leading-tight">Ready to unlock your <br class="hidden sm:block"/>financial potential?</h2>
-<button onclick="showAuthPage('register')" class="w-full sm:w-auto px-10 py-4 rounded-xl bg-gradient-to-r from-primary to-secondary text-on-primary font-bold text-lg active:scale-95 transition-all mb-6 sm:mb-8">
+<div class="flex flex-col sm:flex-row justify-center gap-4 mb-6 sm:mb-8 px-4">
+<button onclick="showAuthPage('register')" class="w-full sm:w-auto px-10 py-4 rounded-xl bg-gradient-to-r from-primary to-secondary text-on-primary font-bold text-lg active:scale-95 transition-all">
                     Create Free Account
                 </button>
+<a href="/downloads/novacredit.apk" class="w-full sm:w-auto px-10 py-4 rounded-xl bg-surface-container border border-outline-variant/20 text-on-surface font-bold text-lg flex items-center justify-center gap-2 active:scale-95 transition-all" download>
+                    <span class="material-symbols-outlined text-secondary" data-icon="android">android</span>
+                    Download APK
+                </a>
+</div>
 
 <p class="text-on-surface-variant text-xs">No credit card required to sign up.</p>
 </div>

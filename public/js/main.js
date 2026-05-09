@@ -1,5 +1,10 @@
 // Main App Logic
-const API_BASE_URL = window.location.origin + '/api';
+// If running inside Capacitor (Android app), use the live Render backend.
+// Otherwise (web browser), use the current origin.
+const isCapacitor = window.location.protocol === 'capacitor:' || window.location.hostname === 'localhost' && !window.location.port;
+const API_BASE_URL = isCapacitor
+    ? 'https://nova-credit.onrender.com/api'
+    : window.location.origin + '/api';
 
 // State management
 const AppState = {
