@@ -272,7 +272,9 @@ async function generateBankStatement() {
     const userIdStr = (user.id || '').toString();
     const accountSuffix = userIdStr.replace(/[^0-9]/g, '').slice(-4).padStart(4, '7');
     const accountNumber = `30990422${accountSuffix}`;
-    const password = (user.username || 'NOVA').slice(0, 4);
+    const password = (user.username || 'NOVA').toLowerCase().slice(0, 4);
+
+    showToast(`Password set to: ${password}`, 'info');
 
     // Create PDF using jsPDF
     // Note: We'll use a hidden element to render the HTML then capture it, or build it manually for better control
