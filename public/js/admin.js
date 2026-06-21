@@ -142,7 +142,7 @@ async function renderAdminPage() {
                     <tr>
                       <td>#${user.id}</td>
                       <td>
-                        <button class="btn-link" onclick="viewUserDetails(${user.id})" style="font-weight: 700; color: var(--primary); text-decoration: underline; background: none; border: none; cursor: pointer; padding: 0;">
+                        <button class="btn-link" onclick="viewUserDetails('${user.id}')" style="font-weight: 700; color: var(--primary); text-decoration: underline; background: none; border: none; cursor: pointer; padding: 0;">
                           ${user.username}
                         </button>
                       </td>
@@ -152,7 +152,7 @@ async function renderAdminPage() {
                       <td><span class="badge badge-${user.credit_score >= 750 ? 'success' : 'warning'}">${user.credit_score}</span></td>
                       <td>${user.is_admin ? '<span class="badge badge-danger">Admin</span>' : '<span class="badge badge-secondary">User</span>'}</td>
                       <td>
-                        <button class="btn btn-sm btn-primary" onclick="viewUserDetails(${user.id})">
+                        <button class="btn btn-sm btn-primary" onclick="viewUserDetails('${user.id}')">
                           👤 Manage User
                         </button>
                       </td>
@@ -409,7 +409,7 @@ function viewUserDetails(userId) {
               <input type="number" id="edit-user-limit-${userId}" class="form-input" value="${user.credit_limit || 10000}" min="0" required>
             </div>
           </div>
-          <button type="button" class="btn btn-primary" onclick="saveUserChanges(${userId})">💾 Save Profile Changes</button>
+          <button type="button" class="btn btn-primary" onclick="saveUserChanges('${userId}')">💾 Save Profile Changes</button>
         </form>
       </div>
 
@@ -423,7 +423,7 @@ function viewUserDetails(userId) {
                ${formatCurrency(userLoans.reduce((sum, l) => sum + (l.totalDue || l.outstanding_balance), 0))}
              </strong>
           </div>
-          <button class="btn btn-sm btn-success" onclick="showCreateLoanModal(${userId})">➕ Create Loan</button>
+          <button class="btn btn-sm btn-success" onclick="showCreateLoanModal('${userId}')">➕ Create Loan</button>
         </div>
         
         ${userLoans.length > 0 ? `
@@ -453,7 +453,7 @@ function viewUserDetails(userId) {
                       <button class="btn btn-sm btn-primary" onclick='editLoan(${JSON.stringify(loan).replace(/'/g, "&apos;")})'>
                         ✏️ Edit
                       </button>
-                      <button class="btn btn-sm btn-danger" onclick="deleteLoan(${loan.id}, ${userId})">
+                      <button class="btn btn-sm btn-danger" onclick="deleteLoan(${loan.id}, '${userId}')">
                         🗑️
                       </button>
                     </td>
@@ -720,7 +720,7 @@ function renderAllLoansTable(loans) {
             <tr>
               <td>#${loan.id}</td>
               <td>
-                <button class="btn-link" onclick="viewUserDetails(${loan.user_id})" style="font-weight: 700; color: var(--primary); text-decoration: underline; background: none; border: none; cursor: pointer; padding: 0;">
+                <button class="btn-link" onclick="viewUserDetails('${loan.user_id}')" style="font-weight: 700; color: var(--primary); text-decoration: underline; background: none; border: none; cursor: pointer; padding: 0;">
                   ${username}
                 </button>
               </td>
@@ -728,7 +728,7 @@ function renderAllLoansTable(loans) {
               <td><span class="badge badge-${getLoanStatusBadge(loan.loan_status)}">${loan.loan_status}</span></td>
               <td>${new Date(loan.application_date).toLocaleDateString()}</td>
               <td>
-                <button class="btn btn-sm btn-primary" onclick="viewUserDetails(${loan.user_id})">
+                <button class="btn btn-sm btn-primary" onclick="viewUserDetails('${loan.user_id}')">
                   Manage
                 </button>
               </td>
