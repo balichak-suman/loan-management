@@ -48,8 +48,8 @@ async function renderLoansPage() {
               <input type="text" class="form-input" value="28 Days (Fixed)" disabled>
             </div>
             <div>
-              <label style="display: block; margin-bottom: 0.5rem; opacity: 0.9;">Interest Rate</label>
-              <input type="text" class="form-input" value="${systemParams.interest_rate}% per month" disabled>
+              <label style="display: block; margin-bottom: 0.5rem; opacity: 0.9;">Charges</label>
+              <input type="text" class="form-input" value="3% App Fee + 3.8% Interest" disabled>
             </div>
           </div>
           <div id="loan-calculation" style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.2);">
@@ -85,8 +85,16 @@ async function renderLoansPage() {
                         <div style="font-weight: 600; color: var(--primary);">${formatCurrency(loan.outstandingBalance || loan.outstanding_balance)}</div>
                       </div>
                       <div>
-                        <div style="font-size: 0.875rem; color: var(--text-muted);">Monthly Payment</div>
+                        <div style="font-size: 0.875rem; color: var(--text-muted);">Total Due</div>
                         <div style="font-weight: 600;">${formatCurrency(loan.monthly_payment)}</div>
+                      </div>
+                      <div>
+                        <div style="font-size: 0.875rem; color: var(--text-muted);">App Fee</div>
+                        <div style="font-weight: 600;">${formatCurrency(loan.applicationFee || Math.round(parseFloat(loan.loan_amount) * 0.03))}</div>
+                      </div>
+                      <div>
+                        <div style="font-size: 0.875rem; color: var(--text-muted);">Interest (28 Days)</div>
+                        <div style="font-weight: 600;">${formatCurrency(loan.interestAmount || Math.round(parseFloat(loan.loan_amount) * 0.038))}</div>
                       </div>
                       ${loan.penaltyAmount > 0 ? `
                         <div>
@@ -144,28 +152,27 @@ async function renderLoansPage() {
 
 function calculateLoan() {
   const amount = parseFloat(document.getElementById('calc-amount')?.value || 50000);
-  // Fixed 1 period (28 days)
-  const interestRate = systemParams.interest_rate / 100;
 
-  const totalWithInterest = amount * (1 + interestRate);
-  const monthlyPayment = totalWithInterest; // Full amount due
-  const totalInterest = totalWithInterest - amount;
+  // Fee breakdown: 3% application fee + 3.8% interest for 28 days = 6.8% total
+  const applicationFee = Math.round(amount * 0.03);
+  const interestAmount = Math.round(amount * 0.038);
+  const totalDue = amount + applicationFee + interestAmount;
 
   const resultDiv = document.getElementById('loan-calculation');
   if (resultDiv) {
     resultDiv.innerHTML = `
       <div class="grid grid-3">
         <div>
-          <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.5rem;">Total Due (28 Days)</div>
-          <div style="font-size: 2rem; font-weight: 800;">${formatCurrency(monthlyPayment)}</div>
+          <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.5rem;">Application Fee</div>
+          <div style="font-size: 2rem; font-weight: 800;">${formatCurrency(applicationFee)}</div>
         </div>
         <div>
-          <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.5rem;">Total Interest</div>
-          <div style="font-size: 2rem; font-weight: 800;">${formatCurrency(totalInterest)}</div>
+          <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.5rem;">Interest (28 Days)</div>
+          <div style="font-size: 2rem; font-weight: 800;">${formatCurrency(interestAmount)}</div>
         </div>
         <div>
           <div style="font-size: 0.875rem; opacity: 0.9; margin-bottom: 0.5rem;">Total Repayment</div>
-          <div style="font-size: 2rem; font-weight: 800;">${formatCurrency(totalWithInterest)}</div>
+          <div style="font-size: 2rem; font-weight: 800;">${formatCurrency(totalDue)}</div>
         </div>
       </div>
     `;
@@ -216,9 +223,10 @@ function showLoanApplicationForm() {
       </div>
       
       <div class="alert alert-info">
-        <strong>Interest Rate:</strong> ${systemParams.interest_rate}% per 28 days<br>
+        <strong>Application Fee:</strong> 3% of loan amount (one-time)<br>
+        <strong>Interest (28 Days):</strong> 3.8% of loan amount<br>
         <strong>Term:</strong> Fixed 28 Days (Single Repayment)<br>
-        <strong>Note:</strong> Full amount + interest is due at the end of the term.
+        <strong>Note:</strong> Full amount + fees is due at the end of the term.
       </div>
     </form>
   `;
@@ -283,19 +291,33 @@ async function viewLoanDetails(loanId) {
     const data = await apiCall(`/loans/${loanId}`);
     const loan = data.loan;
 
+    // Fee breakdown
+    const principal = parseFloat(loan.loan_amount);
+    const appFee = loan.applicationFee || Math.round(principal * 0.03);
+    const interest = loan.interestAmount || Math.round(principal * 0.038);
+
     const content = `
       <div style="display: grid; gap: 1rem;">
         <div>
           <strong>Loan Amount:</strong> ${formatCurrency(loan.loan_amount)}
         </div>
+        <div style="padding: 0.75rem; background: var(--bg-tertiary); border-radius: var(--radius-md);">
+          <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.5rem;">Charges Breakdown</div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+            <span>Application Fee</span>
+            <strong>${formatCurrency(appFee)}</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+            <span>Interest (28 Days)</span>
+            <strong>${formatCurrency(interest)}</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; border-top: 1px solid var(--border-color); margin-top: 0.5rem; padding-top: 0.5rem;">
+            <span>Total Due</span>
+            <strong style="color: var(--primary);">${formatCurrency(loan.monthly_payment)}</strong>
+          </div>
+        </div>
         <div>
           <strong>Outstanding Balance:</strong> ${formatCurrency(loan.outstandingBalance || loan.outstanding_balance)}
-        </div>
-        <div>
-          <strong>Interest Rate:</strong> ${loan.interest_rate}% per month
-        </div>
-        <div>
-          <strong>Monthly Payment:</strong> ${formatCurrency(loan.monthly_payment)}
         </div>
         <div>
           <strong>Status:</strong> <span class="badge badge-${getLoanStatusBadge(loan.loan_status)}">${loan.loan_status}</span>

@@ -282,27 +282,20 @@ async function updateLoan(req, res) {
         const newlyApproved = (loanStatus === 'approved' && currentLoan.loan_status !== 'approved');
 
         if (newlyApproved) {
-            // Recalculate interest and base outstanding balance ONLY on fresh approval
-            const rate = interestRate !== undefined ? interestRate : (currentLoan.interest_rate || 6.8);
+            // Recalculate fees and base outstanding balance ONLY on fresh approval
             const amount = loanAmount !== undefined ? loanAmount : currentLoan.loan_amount;
+            const principal = parseFloat(amount);
 
-            // Rate is percentage (e.g. 6.8)
-            let rateDecimal = parseFloat(rate);
-            if (rateDecimal > 1) rateDecimal = rateDecimal / 100;
+            // Fee breakdown: 3% application fee + 3.8% interest = 6.8% total
+            const applicationFee = Math.round(principal * 0.03);
+            const interestAmt = Math.round(principal * 0.038);
+            const baseTotalWithInterest = principal + applicationFee + interestAmt;
 
-            // Calculate Interest (Simple 1 month interest to match 'Monthly Payment' expectation)
-            const interestAmount = amount * rateDecimal;
-            const baseTotalWithInterest = parseFloat(amount) + interestAmount;
+            console.log(`Newly Approved Loan #${loanId}: Principal ${principal}, App Fee ${applicationFee}, Interest ${interestAmt}, Total ${baseTotalWithInterest}`);
 
-            console.log(`Newly Approved Loan #${loanId}: Principal ${amount}, Rate ${rateDecimal}, Base Total ${baseTotalWithInterest}`);
-
-            // Update outstanding balance to be the Base Total (Principal + Interest).
             finalOutstandingBalance = baseTotalWithInterest;
-
-            // ALSO update monthly_payment to match the new total (assuming 1 month term)
             finalMonthlyPayment = baseTotalWithInterest;
 
-            // Set approval date if not provided
             if (!finalApprovalDate) {
                 finalApprovalDate = new Date().toISOString();
             }

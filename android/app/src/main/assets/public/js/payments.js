@@ -57,7 +57,15 @@ async function renderPaymentsPage() {
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 1rem; padding: 1rem; background: var(--bg-secondary); border-radius: var(--radius-md);">
                       <div>
                         <div style="font-size: 0.875rem; color: var(--text-muted);">Principal</div>
-                        <div style="font-weight: 600;">${formatCurrency(payment.outstandingBalance)}</div>
+                        <div style="font-weight: 600;">${formatCurrency(payment.loanAmount)}</div>
+                      </div>
+                      <div>
+                        <div style="font-size: 0.875rem; color: var(--text-muted);">Application Fee</div>
+                        <div style="font-weight: 600;">${formatCurrency(Math.round(parseFloat(payment.loanAmount) * 0.03))}</div>
+                      </div>
+                      <div>
+                        <div style="font-size: 0.875rem; color: var(--text-muted);">Interest (28 Days)</div>
+                        <div style="font-weight: 600;">${formatCurrency(Math.round(parseFloat(payment.loanAmount) * 0.038))}</div>
                       </div>
                       ${payment.penaltyAmount > 0 ? `
                         <div>
@@ -65,10 +73,6 @@ async function renderPaymentsPage() {
                           <div style="font-weight: 600; color: var(--danger);">${formatCurrency(payment.penaltyAmount)}</div>
                         </div>
                       ` : ''}
-                      <div>
-                        <div style="font-size: 0.875rem; color: var(--text-muted);">Monthly Payment</div>
-                        <div style="font-weight: 600;">${formatCurrency(payment.monthlyPayment)}</div>
-                      </div>
                     </div>
                     
                     ${payment.isOverdue && payment.penaltyAmount > 0 ? `

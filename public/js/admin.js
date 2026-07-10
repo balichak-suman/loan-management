@@ -49,7 +49,7 @@ async function renderAdminPage() {
             <form id="admin-parameters-form">
               <div class="grid grid-2">
                 <div class="form-group">
-                  <label class="form-label" style="color: white;">Interest Rate (% per month)</label>
+                  <label class="form-label" style="color: white;">Total Rate (% per 28 days) — 3% App Fee + 3.8% Interest</label>
                   <input type="number" id="interest-rate" class="form-input" value="${params.interest_rate}" step="0.01" min="0" max="100" required>
                 </div>
                 
@@ -434,7 +434,7 @@ function viewUserDetails(userId) {
                   <th>ID</th>
                   <th>Amount</th>
                   <th>Outstanding</th>
-                  <th>Interest</th>
+                  <th>Charges</th>
                   <th>Status</th>
                   <th>Actions</th>
                 </tr>
@@ -447,7 +447,7 @@ function viewUserDetails(userId) {
                     <td style="color: ${loan.outstanding_balance > 0 ? 'var(--warning)' : 'var(--success)'};">
                       ${formatCurrency(loan.outstanding_balance)}
                     </td>
-                    <td>${loan.interest_rate}%</td>
+                    <td>Fee: ${formatCurrency(Math.round(parseFloat(loan.loan_amount) * 0.03))} + Int: ${formatCurrency(Math.round(parseFloat(loan.loan_amount) * 0.038))}</td>
                     <td><span class="badge badge-${getLoanStatusBadge(loan.loan_status)}">${loan.loan_status}</span></td>
                     <td>
                       <button class="btn btn-sm btn-primary" onclick='editLoan(${JSON.stringify(loan).replace(/'/g, "&apos;")})'>

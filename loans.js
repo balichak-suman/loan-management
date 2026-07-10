@@ -1,11 +1,23 @@
 const { dbHelpers, executeSQL } = require('./database');
 
+// Fee breakdown constants
+const APPLICATION_FEE_RATE = 0.03;  // 3% application fee
+const INTEREST_RATE = 0.038;        // 3.8% interest for 28 days
+// Combined total rate = 6.8%
+
+// Calculate application fee and interest separately for a given principal
+function calcFeeBreakdown(principal) {
+    const applicationFee = Math.round(principal * APPLICATION_FEE_RATE);
+    const interestAmount = Math.round(principal * INTEREST_RATE);
+    return { applicationFee, interestAmount };
+}
+
 // Calculate interest and penalties for a loan
 function calculateLoanDetails(loan) {
     const now = new Date();
     const dueDate = new Date(loan.due_date);
 
-    // Interest is already included in outstanding_balance upon approval
+    // Interest + fee are already included in outstanding_balance upon approval
     // We only calculate penalties for overdue payments
 
     const outstanding_balance = parseFloat(loan.outstanding_balance || 0);
@@ -15,19 +27,20 @@ function calculateLoanDetails(loan) {
     let daysOverdue = 0;
     let penaltyAmount = 0;
     let interestAmount = 0;
+    let applicationFee = 0;
 
     // Heuristic: If outstanding_balance is exactly equal to loan_amount (and status is approved/active),
-    // it likely means interest wasn't added to the DB record.
-    // We should add it for display/calculation purposes.
-    // We assume 1 month simple interest for consistency with the user's view.
+    // it likely means fees weren't added to the DB record.
     if (Math.abs(currentBalance - loan_amount) < 1 && (loan.loan_status === 'approved' || loan.loan_status === 'active')) {
-        const rate = loan.interest_rate || 6.8;
-        // Rate is percentage (e.g. 6.8)
-        let rateDecimal = parseFloat(rate);
-        if (rateDecimal > 1) rateDecimal = rateDecimal / 100;
-
-        interestAmount = loan_amount * rateDecimal;
-        currentBalance += interestAmount;
+        const breakdown = calcFeeBreakdown(loan_amount);
+        applicationFee = breakdown.applicationFee;
+        interestAmount = breakdown.interestAmount;
+        currentBalance += applicationFee + interestAmount;
+    } else {
+        // Derive fee breakdown from the stored total for display purposes
+        const breakdown = calcFeeBreakdown(loan_amount);
+        applicationFee = breakdown.applicationFee;
+        interestAmount = breakdown.interestAmount;
     }
 
     if (now > dueDate && outstanding_balance > 0) {
@@ -53,6 +66,8 @@ function calculateLoanDetails(loan) {
     return {
         outstandingBalance: totalDue,
         interestAccrued: interestAmount,
+        applicationFee,
+        interestAmount,
         daysOverdue,
         penaltyAmount,
         totalDue
@@ -113,15 +128,13 @@ async function applyForLoan(req, res) {
 
         // Get interest rate from system parameters
         const interestRatePercent = params.interest_rate || 6.8;
-        const interestRateDecimal = interestRatePercent / 100;
 
-        // Simple interest for 1 period (28 days treated as 1 month unit for rate application)
-        // Or should it be compounded? User said "28 days a month".
-        // Let's assume the rate applies to this 28-day period.
-        const totalWithInterest = loanAmount * (1 + interestRateDecimal);
+        // Fee breakdown: 3% application fee + 3.8% interest = 6.8% total
+        const { applicationFee, interestAmount } = calcFeeBreakdown(loanAmount);
+        const totalWithFees = loanAmount + applicationFee + interestAmount;
 
         // No EMI, so "monthlyPayment" is just the full amount due at the end
-        const monthlyPayment = totalWithInterest;
+        const monthlyPayment = totalWithFees;
 
         // Create loan with the fetched interest rate and comments
         const loanId = await dbHelpers.createLoan(userId, loanAmount, loanPurpose, monthlyPayment, interestRatePercent, comments, bankName, accountNumber, ifscCode);
@@ -141,6 +154,8 @@ async function applyForLoan(req, res) {
             loan: {
                 id: loanId,
                 loanAmount,
+                applicationFee,
+                interestAmount,
                 monthlyPayment: monthlyPayment.toFixed(2),
                 tenure: '28 Days',
                 interestRate: interestRatePercent,
@@ -260,10 +275,10 @@ async function approveLoan(req, res) {
 
         // Use the interest rate stored on the loan (which came from system params at creation)
         const interestRatePercent = parseFloat(loan.interest_rate || 6.8);
-        const interestRateDecimal = interestRatePercent / 100;
 
-        // Simple interest for 1 period
-        const totalWithInterest = newLoanAmount * (1 + interestRateDecimal);
+        // Fee breakdown: 3% application fee + 3.8% interest = 6.8% total
+        const { applicationFee, interestAmount } = calcFeeBreakdown(newLoanAmount);
+        const totalWithInterest = newLoanAmount + applicationFee + interestAmount;
 
         // Update loan status AND outstanding balance to include full interest
         await dbHelpers.updateLoan(loanId, {
